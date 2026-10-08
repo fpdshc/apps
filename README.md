@@ -34,3 +34,16 @@ so a later edit cannot break the layout.
 `docs/apps.js` fetches `docs/apps.json` and builds the page. Visitors without
 JavaScript get the short fallback list in the `<noscript>` block of
 `docs/index.html`.
+
+## The QR code in the footer
+
+The footer of `docs/index.html` carries a QR code and the short link
+`tinyurl.com/fpdapps`, so a slide or a printed handout can hand the page to a
+phone. The image is `docs/img/qr-code-fpdapps.png` and the markup is static
+HTML in the footer, not part of `apps.json`: it is a fixed page-level element,
+not a resource card.
+
+The short link and the QR code reach the same place — the code encodes
+`https://fpdshc.github.io/apps/` and the link redirects there — so replacing one
+means checking the other still agrees. The image keeps its own white quiet zone,
+which is why the CSS adds only a thin border and padding around it.

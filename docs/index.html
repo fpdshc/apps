@@ -197,6 +197,23 @@
   footer.site strong{color:var(--navy)}
   footer.site p{margin:0 0 6px}
 
+  /* ---------- take-it-with-you row (QR code + short link) ----------
+     For presentations: the code is scanned from a projected or printed screen,
+     so it keeps a white quiet zone around it and a minimum size on a phone. */
+  .share{
+    display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+    padding-bottom:20px;margin-bottom:18px;border-bottom:1px solid var(--line);
+  }
+  .share img{
+    width:170px;height:auto;flex:0 0 auto;
+    background:#fff;padding:8px;border:1px solid var(--line);border-radius:var(--radius);
+  }
+  .share .share-text{max-width:34em}
+  .share .share-text p{margin:0 0 8px}
+  .share .share-title{color:var(--navy);font-weight:700;font-size:1rem}
+  .share .share-text a{color:var(--navy);font-weight:700}
+  .share .share-text a:hover{text-decoration:underline}
+
   /* One common floor so the boxes are the same height, including the lone card
      in the AI section. Only when the cards sit in columns: on a phone the natural
      height is used, and a fixed floor would just add empty space. */
@@ -255,6 +272,15 @@
 
 <footer class="site">
   <div class="wrap">
+    <div class="share">
+      <img src="img/qr-code-fpdapps.png" width="1750" height="1750"
+           alt="QR code that opens this page on a phone">
+      <div class="share-text">
+        <p class="share-title">Take this page with you</p>
+        <p>Scan the code with your phone camera, or type
+          <a href="https://tinyurl.com/fpdapps">tinyurl.com/fpdapps</a> in your browser.</p>
+      </div>
+    </div>
     <p><strong>Faculty Professional Development Services</strong> &middot; Hillsborough College</p>
   </div>
 </footer>
