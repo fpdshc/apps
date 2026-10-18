@@ -56,6 +56,18 @@
             "src": "img/online-module-designer.webp",
             "aria": "Open the Online Module Designer Gem"
           }
+        },
+{
+          "title": "Academic Habits Coach",
+          "description": "An AI chat activity that guides students through scenarios about academic habits — planning, studying, and what to do when work gets difficult — and asks them to think through what each choice could lead to. Students can optionally enter a name, their courses, and their major or career interest so the instructor can give credit for completing it. For a version with no live AI, <a href=\"https://fpdshc.github.io/apps/learning.html\">Make Learning Yours</a> is a private, offline reflection activity: no login and no automatic submission, progress saved only in the student’s own browser, ending in a study plan and a printable certificate.",
+          "url": "https://www.playlab.ai/project/cmvdm293z4yfvmt0wvyhx1q10",
+          "cta": "Start the activity",
+          "external": true,
+          "thumb": {
+            "kind": "image",
+            "src": "img/academic-habits-coach.webp",
+            "aria": "Start the Academic Habits Coach activity"
+          }
         }
       ]
     },
