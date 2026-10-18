@@ -68,6 +68,18 @@
             "src": "img/academic-habits-coach.webp",
             "aria": "Start the Academic Habits Coach activity"
           }
+        },
+        {
+          "title": "AI Teaching Coach",
+          "description": "An AI chat that helps instructors identify and mitigate the teaching issues affecting student success, pairing each one with evidence-based strategies. It asks what you teach and whether the course is online, face-to-face or both, then works through what may be getting in the way and what to try. The <a href=\"https://drive.google.com/drive/folders/1DRF6FowKQsY14sfsDHawdYwC_ly6-O0T\" target=\"_blank\" rel=\"noopener noreferrer\">instructions and resources</a> are in a shared folder, and <a href=\"https://fpdshc.github.io/apps/teaching.html\">From a teaching issue to a practical next step</a> is a non-AI worksheet version: about 10\u201315 minutes, saved only in your own browser, ending in a focused change, the language to use with students, and a way to check the result.",
+          "url": "https://www.playlab.ai/project/cmveacw8o8jxjmt0wi6xzgqm4",
+          "cta": "Start the coach",
+          "external": true,
+          "thumb": {
+            "kind": "image",
+            "src": "img/ai-teaching-coach.webp",
+            "aria": "Start the AI Teaching Coach activity"
+          }
         }
       ]
     },
