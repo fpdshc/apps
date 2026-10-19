@@ -82,6 +82,21 @@
   .hero .jump:hover{background:rgba(255,255,255,.22)}
   .hero .jump svg{width:16px;height:16px}
 
+  /* ---------- second copy of the QR code, in the hero band ----------
+     The same code and short link also sit in the footer. Repeating them at the
+     top puts both within reach without scrolling to the bottom of the page,
+     which is what matters when the band is projected or printed for a room. */
+  .hero-grid{display:flex;align-items:center;gap:34px;justify-content:space-between}
+  .hero-copy{position:relative;flex:1 1 auto;min-width:0}
+  .hero-qr{position:relative;flex:0 0 auto;text-align:center}
+  .hero-qr img{
+    width:156px;height:auto;background:#fff;padding:9px;border-radius:var(--radius);
+    box-shadow:0 8px 20px rgba(0,0,0,.20);
+  }
+  .hero-qr .qr-caption{display:block;margin-top:9px;font-size:.78rem;color:rgba(255,255,255,.85)}
+  .hero p a{color:#fff;font-weight:700;text-decoration:underline}
+  .hero p a:hover{text-decoration:none}
+
   main{padding:20px 0 30px}
 
   section.theme{margin-top:28px}
@@ -214,6 +229,11 @@
   .share .share-text a{color:var(--navy);font-weight:700}
   .share .share-text a:hover{text-decoration:underline}
 
+  /* Stack the code under the copy when the band is too narrow to hold both. */
+  @media (max-width:900px){
+    .hero-grid{flex-direction:column;align-items:flex-start;gap:22px}
+  }
+
   /* One common floor so the boxes are the same height, including the lone card
      in the AI section. Only when the cards sit in columns: on a phone the natural
      height is used, and a fixed floor would just add empty space. */
@@ -254,10 +274,19 @@
 
 <div class="hero">
   <span class="glow" aria-hidden="true"></span>
-  <div class="wrap">
-    <h1>Educational apps and resources for faculty</h1>
-    <p>Practical tools for teaching with AI, Canvas courses and checklists for building your courses, and accessibility guides that make them work for every student.</p>
-    <nav class="cta-row" id="section-nav" aria-label="Sections on this page"></nav>
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <h1>Educational apps and resources for faculty</h1>
+      <p>Practical tools for teaching with AI, Canvas courses and checklists for building
+        your courses, and accessibility guides that make them work for every student.
+        Short link: <a href="https://tinyurl.com/fpdapps">tinyurl.com/fpdapps</a></p>
+      <nav class="cta-row" id="section-nav" aria-label="Sections on this page"></nav>
+    </div>
+    <div class="hero-qr">
+      <img src="img/qr-code-fpdapps.png" width="1750" height="1750"
+           alt="QR code that opens this page on a phone">
+      <span class="qr-caption">Scan to open on your phone</span>
+    </div>
   </div>
 </div>
 
