@@ -57,7 +57,7 @@
             "aria": "Open the Online Module Designer Gem"
           }
         },
-{
+        {
           "title": "Academic Habits Coach",
           "description": "An AI chat activity that guides students through scenarios about academic habits — planning, studying, and what to do when work gets difficult — and asks them to think through what each choice could lead to. Students can optionally enter a name, their courses, and their major or career interest so the instructor can give credit for completing it. For a version with no live AI, <a href=\"https://fpdshc.github.io/apps/learning.html\">Make Learning Yours</a> is a private, offline reflection activity: no login and no automatic submission, progress saved only in the student’s own browser, ending in a study plan and a printable certificate.",
           "url": "https://www.playlab.ai/project/cmvdm293z4yfvmt0wvyhx1q10",
@@ -71,7 +71,7 @@
         },
         {
           "title": "AI Teaching Coach",
-          "description": "An AI chat that helps instructors identify and mitigate the teaching issues affecting student success, pairing each one with evidence-based strategies. It asks what you teach and whether the course is online, face-to-face or both, then works through what may be getting in the way and what to try. The <a href=\"https://drive.google.com/drive/folders/1DRF6FowKQsY14sfsDHawdYwC_ly6-O0T\" target=\"_blank\" rel=\"noopener noreferrer\">instructions and resources</a> are in a shared folder, and <a href=\"https://fpdshc.github.io/apps/teaching.html\">From a teaching issue to a practical next step</a> is a non-AI worksheet version: about 10\u201315 minutes, saved only in your own browser, ending in a focused change, the language to use with students, and a way to check the result.",
+          "description": "An AI chat that helps instructors identify and mitigate the teaching issues affecting student success, pairing each one with evidence-based strategies. It asks what you teach and whether the course is online, face-to-face or both, then works through what may be getting in the way and what to try. The <a href=\"https://drive.google.com/drive/folders/1DRF6FowKQsY14sfsDHawdYwC_ly6-O0T\" target=\"_blank\" rel=\"noopener noreferrer\">instructions and resources</a> are in a shared folder, and <a href=\"https://fpdshc.github.io/apps/teaching.html\">From a teaching issue to a practical next step</a> is a non-AI worksheet version: about 10–15 minutes, saved only in your own browser, ending in a focused change, the language to use with students, and a way to check the result.",
           "url": "https://www.playlab.ai/project/cmveacw8o8jxjmt0wi6xzgqm4",
           "cta": "Start the coach",
           "external": true,
@@ -137,6 +137,18 @@
       "palette": "blend",
       "intro": "Canvas courses and checklists for teaching in Canvas, from getting started to teaching online.",
       "cards": [
+        {
+          "title": "Faculty Teaching & Instructional Technology Resources",
+          "description": "A Canvas course that works as a teaching handbook for HCC faculty. Its modules cover Hillsborough College resources (instructor quick links, handouts, policies and templates, college data), what students need (student populations, student learning, motivation and engagement, mental health and well-being), teaching topics (new faculty, online teaching, syllabus, first day of class, first exam or assignment tips), technologies (Canvas and Canvas Studio, accessibility, open educational resources, artificial intelligence, effective videos), and discipline-specific resources for STEM, humanities, social sciences and professional disciplines. Further modules cover alternative assessment options and the Respondus LockDown Browser and Honorlock proctoring tools.",
+          "url": "https://hcc.instructure.com/courses/145496",
+          "cta": "Open the faculty handbook",
+          "external": true,
+          "thumb": {
+            "kind": "image",
+            "src": "img/faculty-teaching-resources.webp",
+            "aria": "Open the Faculty Teaching & Instructional Technology Resources course"
+          }
+        },
         {
           "title": "Canvas Starter Kit",
           "description": "An optional Canvas course you can copy into your own to save time building it. It comes with a welcome homepage you can rewrite, banner images and buttons you can swap from the files area, and a walkthrough video on importing and customizing it. Highlighted notes in the course are instructions to delete or edit as you go. Import a copy from Canvas Commons by searching for HCC Canvas Starter Kit.",
