@@ -70,6 +70,18 @@
           }
         },
         {
+          "title": "AI Literacy Design Coach",
+          "description": "An AI chat that guides instructors through designing or adapting AI literacy for their own course. It asks what course you teach and whether it is online, face-to-face or both, then works through the approach with you. The <a href=\"https://drive.google.com/drive/folders/1JAvIc3PQLHfb4WpRo3T89If-FVjODb-g?usp=sharing\" target=\"_blank\" rel=\"noopener noreferrer\">instructions and sample chat sessions</a> are in a shared folder.",
+          "url": "https://www.playlab.ai/project/cmvfn97oq0sceju0w8mwdxsq3",
+          "cta": "Start the coach",
+          "external": true,
+          "thumb": {
+            "kind": "image",
+            "src": "img/ai-literacy-design-coach.webp",
+            "aria": "Start the AI Literacy Design Coach activity"
+          }
+        },
+        {
           "title": "Academic Habits Coach",
           "description": "An AI chat activity that guides students through scenarios about academic habits — planning, studying, and what to do when work gets difficult — and asks them to think through what each choice could lead to. Students can optionally enter a name, their courses, and their major or career interest so the instructor can give credit for completing it. For a version with no live AI, <a href=\"https://fpdshc.github.io/apps/learning.html\">Make Learning Yours</a> is a private, offline reflection activity: no login and no automatic submission, progress saved only in the student’s own browser, ending in a study plan and a printable certificate.",
           "url": "https://www.playlab.ai/project/cmvdm293z4yfvmt0wvyhx1q10",
