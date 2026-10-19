@@ -58,6 +58,18 @@
           }
         },
         {
+          "title": "AI Literacy Resources",
+          "description": "A Canvas course collecting ready-to-use AI literacy materials for students, in two modules. One gathers AI literacy frameworks, research and FAQs, and resources for teaching AI literacy across the curriculum. The other is a set of sample SLS (Student Life Skills) activities on using AI for college and career success: resources for using AI ethically to support your learning, a knowledge check quiz on ethical AI use, an academic habits AI coaching activity to try, a discussion on building your own AI learning tool, a dynamic assessment quiz, and a Career Dreamer assignment using Google's AI career exploration tool.",
+          "url": "https://hcc.instructure.com/courses/175837",
+          "cta": "Open the course",
+          "external": true,
+          "thumb": {
+            "kind": "image",
+            "src": "img/ai-literacy-resources.webp",
+            "aria": "Open the AI Literacy Resources course"
+          }
+        },
+        {
           "title": "Academic Habits Coach",
           "description": "An AI chat activity that guides students through scenarios about academic habits — planning, studying, and what to do when work gets difficult — and asks them to think through what each choice could lead to. Students can optionally enter a name, their courses, and their major or career interest so the instructor can give credit for completing it. For a version with no live AI, <a href=\"https://fpdshc.github.io/apps/learning.html\">Make Learning Yours</a> is a private, offline reflection activity: no login and no automatic submission, progress saved only in the student’s own browser, ending in a study plan and a printable certificate.",
           "url": "https://www.playlab.ai/project/cmvdm293z4yfvmt0wvyhx1q10",
