@@ -7,7 +7,7 @@
       "navLabel": "AI resources",
       "icon": "sparkle",
       "palette": "navy",
-      "intro": "Tools and resources for using generative AI in your teaching, and for understanding what the research says about it. See the <a href=\"https://docs.google.com/presentation/d/1s21g9-AzPULeXtD5MIwh78gX7oycIcY7m2qUjjMyr08/edit?usp=sharing\" target=\"_blank\" rel=\"noopener noreferrer\">FPD Day Presentation Slides</a>.",
+      "intro": "Tools and resources for using generative AI in your teaching, and for understanding what the research says about it.",
       "cards": [
         {
           "title": "AI-Era Assignment Design Coach",
