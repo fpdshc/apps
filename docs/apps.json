@@ -210,6 +210,40 @@
           }
         }
       ]
+    },
+    {
+      "id": "discipline-specific",
+      "label": "Discipline-specific apps",
+      "navLabel": "Discipline-specific apps",
+      "icon": "book",
+      "palette": "navy",
+      "intro": "Interactive tools built for a single discipline: a leadership self-assessment for medical laboratory operations, and a family sociology simulation for social science courses.",
+      "cards": [
+        {
+          "title": "Clinical Leadership Competency Framework",
+          "description": "A self-assessment for medical laboratory operations leadership, organized around five domains: demonstrating personal qualities, working with others, managing services, improving services, and setting direction. Each domain has four statements to rate by how often they apply, and the tool builds a leadership profile with a domain breakdown, a growth opportunity reflection on a lab scenario, and a personal action plan covering strengths, the key development need, a SMART goal, obstacles, and the support needed. Finishing it generates a certificate and a multi-page printable report.",
+          "url": "clcf.html",
+          "cta": "Open the assessment",
+          "external": false,
+          "thumb": {
+            "kind": "image",
+            "src": "img/clcf.webp",
+            "aria": "Open the Clinical Leadership Competency Framework self-assessment"
+          }
+        },
+        {
+          "title": "Family Futures",
+          "description": "A family sociology simulation in six chapters, about 45 to 75 minutes, with no account needed and nothing scored as better or worse. Students create two fictional adults and a child, plan a budget and a care schedule, practice communication and face a disruption, then interpret their choices through sociology. The branches are prewritten and transparent rather than a live AI model, and the work is saved in the student's own browser. At the end it exports a six-section family report, a completion certificate, worksheets, a budget CSV, and a prompt for an AI assistant.",
+          "url": "family.html",
+          "cta": "Open the simulation",
+          "external": false,
+          "thumb": {
+            "kind": "image",
+            "src": "img/family.webp",
+            "aria": "Open the Family Futures sociology simulation"
+          }
+        }
+      ]
     }
   ]
 }

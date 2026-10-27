@@ -21,6 +21,8 @@ const ICONS = {
   accessibility: '<circle cx="12" cy="4.5" r="1.8"/><path d="M4.5 8.5h15M12 8.5v6M12 14.5l-3.5 6M12 14.5l3.5 6"/>',
   // a figure in an academic cap
   professor: '<path d="M3 7.4L12 3.6l9 3.8-9 3.8z"/><circle cx="12" cy="11.6" r="2.5"/><path d="M4.8 21c0-3.5 3.2-5.9 7.2-5.9s7.2 2.4 7.2 5.9"/>',
+  // an open book, for a section holding discipline-specific material
+  book: '<path d="M4 5.8c2.7-.9 5.3-.9 8 .6 2.7-1.5 5.3-1.5 8-.6v12.2c-2.7-.9-5.3-.9-8 .6-2.7-1.5-5.3-1.5-8-.6z"/><path d="M12 6.4v12.2"/>',
 };
 
 /* Colour sets, all drawn from the FPDS blue and green. */
