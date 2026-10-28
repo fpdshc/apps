@@ -217,8 +217,20 @@
       "navLabel": "Discipline-specific apps",
       "icon": "book",
       "palette": "navy",
-      "intro": "Interactive tools built for a single discipline: a leadership self-assessment for medical laboratory operations, and a family sociology simulation for social science courses.",
+      "intro": "Interactive tools written for a specific course, discipline or program rather than for general use. Each one works through the decisions and vocabulary of that context, runs in the browser with no account, keeps the student's work on their own device, and ends with something they can print, export or hand in.",
       "cards": [
+        {
+          "title": "Make Learning Yours",
+          "description": "A private, offline reflection activity on how a student actually studies, for first-year and student success courses. Short scenarios cover noticing a habit, reading a source critically, comparing work without punishing yourself, asking for help and turning a block into a next step, and it ends with a personal strategy checklist, a support plan matched to the barriers the student names, and printable pages for review and follow-up. Progress saves in the browser and nothing reaches an instructor unless the student shares the printout.",
+          "url": "learning.html",
+          "cta": "Open the reflection activity",
+          "external": false,
+          "thumb": {
+            "kind": "image",
+            "src": "img/learning.webp",
+            "aria": "Open the Make Learning Yours college success reflection"
+          }
+        },
         {
           "title": "Clinical Leadership Competency Framework",
           "description": "A self-assessment for medical laboratory operations leadership, organized around five domains: demonstrating personal qualities, working with others, managing services, improving services, and setting direction. Each domain has four statements to rate by how often they apply, and the tool builds a leadership profile with a domain breakdown, a growth opportunity reflection on a lab scenario, and a personal action plan covering strengths, the key development need, a SMART goal, obstacles, and the support needed. Finishing it generates a certificate and a multi-page printable report.",
