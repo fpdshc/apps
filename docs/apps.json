@@ -163,7 +163,7 @@
       "cards": [
         {
           "title": "Faculty Teaching & Instructional Technology Resources",
-          "description": "A Canvas course that works as a teaching handbook for HCC faculty. Its modules cover Hillsborough College resources (instructor quick links, handouts, policies and templates, college data), what students need (student populations, student learning, motivation and engagement, mental health and well-being), teaching topics (new faculty, online teaching, syllabus, first day of class, first exam or assignment tips), technologies (Canvas and Canvas Studio, accessibility, open educational resources, artificial intelligence, effective videos), and discipline-specific resources for STEM, humanities, social sciences and professional disciplines. Further modules cover alternative assessment options and the Respondus LockDown Browser and Honorlock proctoring tools.",
+          "description": "A Canvas course that works as a teaching handbook for HC faculty. Its modules cover Hillsborough College resources (instructor quick links, handouts, policies and templates, college data), what students need (student populations, student learning, motivation and engagement, mental health and well-being), teaching topics (new faculty, online teaching, syllabus, first day of class, first exam or assignment tips), technologies (Canvas and Canvas Studio, accessibility, open educational resources, artificial intelligence, effective videos), and discipline-specific resources for STEM, humanities, social sciences and professional disciplines. Further modules cover alternative assessment options and the Respondus LockDown Browser and Honorlock proctoring tools.",
           "url": "https://hcc.instructure.com/courses/145496",
           "cta": "Open the faculty handbook",
           "external": true,
@@ -175,7 +175,7 @@
         },
         {
           "title": "Canvas Starter Kit",
-          "description": "An optional Canvas course you can copy into your own to save time building it. It comes with a welcome homepage you can rewrite, banner images and buttons you can swap from the files area, and a walkthrough video on importing and customizing it. Highlighted notes in the course are instructions to delete or edit as you go. Import a copy from Canvas Commons by searching for HCC Canvas Starter Kit.",
+          "description": "An optional Canvas course you can copy into your own to save time building it. It comes with a welcome homepage you can rewrite, banner images and buttons you can swap from the files area, and a walkthrough video on importing and customizing it. Highlighted notes in the course are instructions to delete or edit as you go. Import a copy from Canvas Commons by searching for HC Canvas Starter Kit.",
           "url": "https://hcc.instructure.com/courses/157140",
           "cta": "Open the starter kit",
           "external": true,
