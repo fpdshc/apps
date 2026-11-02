@@ -47,3 +47,22 @@ The short link and the QR code reach the same place — the code encodes
 `https://fpdshc.github.io/apps/` and the link redirects there — so replacing one
 means checking the other still agrees. The image keeps its own white quiet zone,
 which is why the CSS adds only a thin border and padding around it.
+
+## Link previews
+
+When somebody posts a link to the home page on Slack, Teams, Facebook, LinkedIn or X,
+the preview image is `docs/img/social-card.png` — 1200x630, which is the size those
+crawlers expect — declared in the `og:image` and `twitter:image` tags in
+`docs/index.html`. It has to be an absolute URL, because a crawler does not resolve a
+relative one against the page it fetched.
+
+The image is generated, not hand-made. `tools/og-card.html` reproduces the left side of
+the hero band — same gradient and glow, same heading, standfirst and short link — and
+drops the QR code, which is useless in a preview nobody can point a phone at. After a
+change to the hero copy, the palette or the logo, re-render and commit the result:
+
+    tools/render-social-card.sh
+
+The script finds a Chromium (`$CHROME_BIN`, a Playwright cache, or the usual system
+paths), screenshots the card at exactly 1200x630 and fails if the output is any other
+size. Keep the card's text in step with the hero by hand; the two are separate files.
