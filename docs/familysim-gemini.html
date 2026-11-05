@@ -3,133 +3,2626 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Family Futures Simulation</title>
-    <!-- Three.js CDN -->
+    <title>Family Futures 3D — Family Sociology Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        :root {
-            --navy: #1d2c5d;
-            --blue: #344b89;
-            --teal: #17645a;
-            --gold: #ddc88e;
-            --paper: rgba(245, 243, 236, 0.95);
-        }
-        body, html {
-            margin: 0; padding: 0; overflow: hidden;
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #ddeeff;
-        }
-        /* 3D Canvas */
-        #canvas-container {
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
-        }
-        /* UI Overlay */
-        #ui-layer {
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2;
-            pointer-events: none; /* Let clicks pass through to 3D if not on a panel */
-            display: flex; justify-content: center; align-items: center;
-        }
-        .panel {
-            background: var(--paper); border: 1px solid #dddfe4;
-            border-radius: 12px; max-width: 650px; width: 90%; max-height: 90vh;
-            overflow-y: auto; padding: 2rem; pointer-events: auto;
-            box-shadow: 0 12px 35px rgba(29, 44, 93, 0.2);
-            backdrop-filter: blur(5px);
-        }
-        h1, h2, h3 { color: var(--navy); margin-top: 0; }
-        p { color: #444; line-height: 1.5; }
-        .row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
-        .col { flex: 1; min-width: 150px; background: white; padding: 1rem; border-radius: 8px; border: 1px solid #ccc; }
-        
-        /* Form Elements */
-        label { display: block; font-size: 0.85rem; font-weight: bold; margin-top: 0.5rem; color: var(--navy); }
-        input[type="text"], input[type="number"], select, textarea {
-            width: 100%; padding: 0.5rem; margin-top: 0.2rem;
-            border: 1px solid #bdc5d0; border-radius: 6px; box-sizing: border-box;
-        }
-        input[type="color"] { width: 100%; height: 35px; border: none; cursor: pointer; }
-        textarea { resize: vertical; min-height: 80px; }
-        
-        /* Buttons */
-        .controls { display: flex; justify-content: space-between; margin-top: 2rem; border-top: 1px solid #ccc; padding-top: 1rem; }
-        button {
-            background: var(--navy); color: white; border: none; border-radius: 6px;
-            padding: 0.75rem 1.5rem; font-weight: bold; cursor: pointer; transition: background 0.2s;
-        }
-        button:hover { background: var(--blue); }
-        button.secondary { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
-        button.secondary:hover { background: rgba(29, 44, 93, 0.1); }
-        button.danger { background: #a23c38; }
-        button.danger:hover { background: #8a3330; }
-
-        /* Certificate Print Styles */
-        #printArea { display: none; background: white; width: 100vw; min-height: 100vh; position: absolute; top: 0; left: 0; z-index: 10; padding: 3rem; box-sizing: border-box; }
-        .cert-border { border: 4px double #8d7744; padding: 3rem; text-align: center; height: 100%; }
-        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        body { margin: 0; overflow: hidden; background-color: #0f172a; font-family: system-ui, -apple-system, sans-serif; }
+        #canvas-container canvas { display: block; width: 100% !important; height: 100% !important; outline: none; }
+        .char-counter { font-size: 0.75rem; font-weight: 600; transition: all 0.2s; }
+        .char-counter.met { color: #059669; }
+        .char-counter.unmet { color: #d97706; }
         @media print {
-            #canvas-container, #ui-layer { display: none !important; }
-            #printArea { display: block !important; }
+            body { overflow: visible !important; background: white !important; }
+            #app-shell, #modal-backdrop { display: none !important; }
+            #print-area { display: block !important; }
+            @page { margin: 15mm; }
         }
     </style>
 </head>
-<body>
+<body class="text-slate-800 antialiased">
 
-<div id="canvas-container"></div>
+<!-- MAIN SPLIT-SCREEN SHELL -->
+<div id="app-shell" class="flex flex-col lg:flex-row h-screen w-screen overflow-hidden">
 
-<div id="ui-layer">
-    <div class="panel" id="panel-content">
-        <!-- JS will inject UI here -->
+    <!-- LEFT / TOP: 3D INTERACTIVE DIORAMA STAGE -->
+    <div class="w-full lg:w-7/12 h-[42vh] lg:h-full relative bg-slate-900 select-none shrink-0">
+        <div id="canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+
+        <!-- Top Left HUD: Family & Metrics -->
+        <div class="absolute top-3 left-3 right-3 flex flex-wrap justify-between items-start gap-2 pointer-events-none">
+            <div class="bg-slate-900/85 backdrop-blur-md text-white px-4 py-2.5 rounded-xl border border-slate-700/80 shadow-xl pointer-events-auto">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="hud-family-name" class="font-serif font-bold text-amber-300 text-base">The Rivera Household</span>
+                </div>
+                <p id="hud-scene-subtitle" class="text-xs text-slate-300 mt-0.5">Drag to orbit 3D room · Scroll to zoom</p>
+            </div>
+
+            <div class="flex gap-2 pointer-events-auto">
+                <div class="bg-slate-900/85 backdrop-blur-md text-white px-3.5 py-2 rounded-xl border border-slate-700/80 shadow-xl text-right">
+                    <span class="block text-[10px] uppercase tracking-wider text-slate-400">Net Balance / Mo</span>
+                    <strong id="hud-balance" class="text-sm font-mono text-emerald-400">$80.00</strong>
+                </div>
+                <div class="bg-slate-900/85 backdrop-blur-md text-white px-3.5 py-2 rounded-xl border border-slate-700/80 shadow-xl text-right">
+                    <span class="block text-[10px] uppercase tracking-wider text-slate-400">Free Hrs (A1 / A2)</span>
+                    <strong id="hud-hours" class="text-sm font-mono text-sky-300">50h / 55h</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D Speech Bubble Overlay (For Chapter 3 & 4 Rehearsals) -->
+        <div id="scene-speech-overlay" class="hidden absolute bottom-14 left-4 right-4 md:left-10 md:right-10 bg-white/95 backdrop-blur-md border-2 border-teal-600 rounded-2xl p-4 shadow-2xl transition-all">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <span id="speech-speaker" class="text-xs font-extrabold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full">Live 3D Rehearsal</span>
+                    <p id="speech-line" class="text-sm md:text-base font-serif text-slate-900 mt-1.5 italic">“You never notice what needs doing. I am always the one arranging pickup.”</p>
+                    <p id="speech-note" class="text-xs text-slate-600 mt-1"></p>
+                </div>
+                <button onclick="hideSpeechOverlay()" class="text-xs text-slate-400 hover:text-slate-700 font-bold px-2 py-1">✕</button>
+            </div>
+        </div>
+
+        <!-- Bottom Camera Controls Bar -->
+        <div class="absolute bottom-3 left-3 right-3 flex justify-between items-center pointer-events-none">
+            <div class="flex gap-1.5 bg-slate-900/80 backdrop-blur px-2.5 py-1.5 rounded-lg border border-slate-700 pointer-events-auto text-xs text-slate-200">
+                <button onclick="setCameraFocus('all')" class="px-2 py-1 hover:bg-slate-700 rounded transition">Whole Room</button>
+                <button onclick="setCameraFocus(0)" class="px-2 py-1 hover:bg-slate-700 rounded transition">Adult 1</button>
+                <button onclick="setCameraFocus(1)" class="px-2 py-1 hover:bg-slate-700 rounded transition">Adult 2</button>
+                <button onclick="setCameraFocus(2)" class="px-2 py-1 hover:bg-slate-700 rounded transition">Child</button>
+            </div>
+            <div class="bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-700 pointer-events-auto text-xs text-slate-300 hidden sm:block">
+                <span id="save-indicator">Saved in browser</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT / BOTTOM: EDUCATIONAL WORKBOOK & CONTROLS -->
+    <div class="w-full lg:w-5/12 h-[58vh] lg:h-full bg-stone-50 flex flex-col border-l border-slate-300 shadow-2xl z-10">
+
+        <!-- Top Navigation & Tools Header -->
+        <header class="bg-slate-900 text-white px-4 py-3 border-b border-slate-800 shrink-0">
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+                <div>
+                    <h1 class="text-base font-serif font-bold tracking-tight text-amber-300">Family Futures 3D</h1>
+                    <p class="text-[11px] text-slate-400">Interactive Sociology Simulation & Portfolio</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="exportBackup()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded border border-slate-700 transition" title="Download JSON Backup">Save Backup</button>
+                    <button onclick="document.getElementById('import-file').click()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded border border-slate-700 transition" title="Restore JSON Backup">Load</button>
+                    <button onclick="openGuideModal()" class="text-xs bg-teal-700 hover:bg-teal-600 text-white px-2.5 py-1.5 rounded font-semibold transition">TILT & Rubric</button>
+                </div>
+            </div>
+
+            <!-- Chapter Stepper Pills -->
+            <nav id="chapter-nav" class="grid grid-cols-8 gap-1 text-[11px]" aria-label="Simulation Chapters"></nav>
+        </header>
+
+        <!-- Scrollable Chapter Workspace -->
+        <main id="workspace" class="flex-1 overflow-y-auto p-5 md:p-6 space-y-5"></main>
+
+        <!-- Validation Error Drawer -->
+        <div id="error-drawer" class="hidden bg-rose-50 border-t border-rose-200 px-5 py-3 text-xs text-rose-900 shrink-0"></div>
+
+        <!-- Sticky Footer Navigation -->
+        <footer class="bg-white border-t border-slate-200 px-5 py-3 flex justify-between items-center shrink-0">
+            <button id="btn-prev" onclick="changeStep(-1)" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-sm font-semibold transition">← Previous</button>
+            <div class="text-center">
+                <span id="footer-progress" class="text-xs font-semibold text-slate-500">0 of 6 chapters complete</span>
+            </div>
+            <button id="btn-next" onclick="handleNextStep()" class="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold shadow transition">Save & Continue →</button>
+        </footer>
     </div>
 </div>
 
-<div id="printArea">
-    <div class="cert-border">
-        <h2>Family Futures Simulation</h2>
-        <h1>Certificate of Completion</h1>
-        <p>This certifies that</p>
-        <h2 id="cert-name">[Student Name]</h2>
-        <p>has successfully constructed a 3D family model, managed budget constraints, resolved sociological scenarios, and applied theoretical frameworks.</p>
-        <p>Completed on: <span id="cert-date"></span></p>
-        <br><br>
-        <p style="font-size: 0.8rem; color: #666;">Generated via Interactive 3D Simulation</p>
+<!-- MODAL DIALOG (For Previews, TILT Guide, Reset Confirmation) -->
+<div id="modal-backdrop" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
+            <h2 id="modal-title" class="text-lg font-serif font-bold text-amber-300">Modal Title</h2>
+            <button onclick="closeModal()" class="text-slate-300 hover:text-white text-sm font-bold px-2.5 py-1 rounded bg-slate-800">Close ✕</button>
+        </div>
+        <div id="modal-body" class="p-6 overflow-y-auto text-sm leading-relaxed space-y-4"></div>
     </div>
 </div>
+
+<input id="import-file" type="file" accept=".json,application/json" class="hidden">
+<div id="print-area" class="hidden"></div>
 
 <script>
-/** 
- * THREE.JS 3D SCENE SETUP
+'use strict';
+
+/**
+ * ============================================================================
+ * 1. SOCIOLOGICAL DATA, CONCEPTS, THEORIES & RUBRIC CONSTANTS
+ * ============================================================================
  */
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xddeeff);
-scene.fog = new THREE.Fog(0xddeeff, 10, 50);
+const STORAGE_KEY = 'family-futures-3d-v2';
+const SHORT_STEPS = ['Start', '1·Family', '2·Budget', '3·Relate', '4·Crisis', '5·Theory', '6·Future', 'Portfolio'];
+const CHAPTER_TITLES = [
+    'Welcome & Transparent Assignment Guide',
+    'Who Are We? Identity & 3D Family Builder',
+    'What Do We Do? Money & 168-Hour Time Plan',
+    'How Do We Live? Relationships & Communication',
+    'What Issues Arise? Structural Disruptions',
+    'How Do We Compare? Sociological Theory',
+    'How Will We Survive & Thrive? Future Paths',
+    'Your Learning Portfolio & Completion Certificate'
+];
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 4, 10);
-camera.lookAt(0, 2, 0);
+const SKIN_TONES = [
+    ['#f9dcc4', 'Light Warm'],
+    ['#eab68c', 'Medium Beige'],
+    ['#d19466', 'Olive / Tan'],
+    ['#a66a44', 'Warm Brown'],
+    ['#754326', 'Deep Brown'],
+    ['#4a2816', 'Rich Espresso']
+];
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-document.getElementById('canvas-container').appendChild(renderer.domElement);
+const HAIR_STYLES = [
+    ['short', 'Short Crop'],
+    ['bun', 'Top Bun'],
+    ['long', 'Shoulder Length'],
+    ['afro', 'Full Curly / Afro'],
+    ['cap', 'Fitted Cap'],
+    ['bald', 'Shaved / Bald']
+];
 
-// Lighting
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-scene.add(ambientLight);
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-dirLight.position.set(5, 10, 5);
-dirLight.castShadow = true;
-scene.add(dirLight);
+const HAIR_COLORS = [
+    ['#1c1917', 'Jet Black'],
+    ['#452c1e', 'Dark Brown'],
+    ['#92400e', 'Auburn / Chestnut'],
+    ['#d97706', 'Golden Blonde'],
+    ['#94a3b8', 'Silver / Gray'],
+    ['#7c2d12', 'Copper Red']
+];
 
-// Floor
-const floorGeo = new THREE.PlaneGeometry(50, 50);
-const floorMat = new THREE.MeshStandardMaterial({ color: 0x88aa88, roughness: 0.8 });
-const floor = new THREE.Mesh(floorGeo, floorMat);
-floor.rotation.x = -Math.PI / 2;
-floor.receiveShadow = true;
-scene.add(floor);
+const OUTFIT_COLORS = [
+    ['#0f766e', 'Teal'],
+    ['#1d4ed8', 'Royal Blue'],
+    ['#b45309', 'Amber Ochre'],
+    ['#be123c', 'Crimson Rose'],
+    ['#4338ca', 'Indigo'],
+    ['#15803d', 'Forest Green'],
+    ['#6d28d9', 'Plum Purple'],
+    ['#334155', 'Slate Charcoal']
+];
 
-// Resize handler
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+const ACCESSORIES = [
+    ['none', 'No Accessory'],
+    ['glasses', 'Eyeglasses'],
+    ['apron', 'Work / Chef Apron'],
+    ['stethoscope', 'Medical Badge'],
+    ['backpack', 'Student Pack']
+];
+
+const THEORIES = {
+    'Conflict perspective': {
+        def: 'Examines how unequal resources, money, and power shape family roles, decisions, and opportunities.',
+        ask: 'Who controls financial and time resources, who performs unpaid work, and whose options are constrained?'
+    },
+    'Symbolic interactionism': {
+        def: 'Examines how people create, negotiate, and interpret meanings and roles through everyday interaction.',
+        ask: 'What does “being a supportive partner or parent” mean to each adult, and how do they negotiate that meaning?'
+    },
+    'Structural functionalism': {
+        def: 'Examines functions that families perform—such as socialization, care, and support—and how these connect with external institutions.',
+        ask: 'How are care and socialization organized, and what happens when work or childcare institutions fail to meet a need?'
+    },
+    'Family systems perspective': {
+        def: 'Treats the family as an interdependent system where a disruption in one role or relationship ripples across all members.',
+        ask: 'How does a work-schedule shift or transport disruption affect caregiving, couple tension, and the child’s routine?'
+    },
+    'Feminist perspective': {
+        def: 'Examines how gendered power, expectations, and intersecting inequalities shape family life and paid/unpaid care work.',
+        ask: 'Which social expectations shape who notices, plans, and performs unpaid care work, and how can that be renegotiated?'
+    }
+};
+
+const CONCEPTS = {
+    'Socialization': 'Learning norms, expectations, and practices through interaction with family and community.',
+    'Life course': 'Examining how historical context, timing, transitions, and linked lives shape trajectories.',
+    'Role conflict': 'Competing demands between two or more different roles, such as paid employee versus caregiver.',
+    'Unpaid care work': 'Caregiving, emotional labor, and household planning that sustain daily life without direct pay.',
+    'Gender expectations': 'Socially constructed expectations associated with gender roles rather than innate traits.',
+    'Social support': 'Emotional, practical, or informational help through kin or community networks; availability has limits.',
+    'Structural constraint': 'Institutional or socioeconomic conditions (e.g., transit, shift rigidity, childcare costs) that bound individual choices.',
+    'Companionate love': 'Deep affection, friendship, emotional closeness, and long-term commitment.',
+    'Authoritative parenting': 'High warmth and responsiveness paired with clear expectations and consistent structure.',
+    'Authoritarian parenting': 'High control and obedience demands paired with lower emotional responsiveness.',
+    'Permissive parenting': 'High warmth and affection paired with few boundaries or behavioral demands.',
+    'Uninvolved parenting': 'Low responsiveness and low structure, sometimes linked to severe overload or lack of support.',
+    'Criticism': 'Attacking a partner’s character (“You never care”) rather than naming a specific behavior or need.',
+    'Contempt': 'Communicating superiority, sarcasm, or disrespect toward a partner.',
+    'Defensiveness': 'Deflecting responsibility or counter-blaming instead of addressing the core concern.',
+    'Stonewalling': 'Shutting down or withdrawing from interaction (distinct from a mutually agreed calming break).',
+    'Active listening': 'Verifying understanding of a partner’s specific concern before proposing solutions.',
+    'Resilience': 'Adapting through relationships, routines, and external supports without pretending structural barriers vanish.'
+};
+
+const QUESTIONS = {
+    1: {
+        q: 'Two families share the exact same household structure. What can a sociologist reasonably conclude?',
+        options: [
+            'Their communication patterns and financial stability will be identical.',
+            'More information is needed about their life histories, resources, support networks, and interactions.',
+            'One household structure automatically guarantees better child outcomes.'
+        ],
+        answer: 1,
+        why: 'Family form alone does not determine strengths, resources, or outcomes. Sociologists examine specific histories, structural conditions, and variation within forms.'
+    },
+    2: {
+        q: 'Your fictional family budget shows a monthly deficit. What is the strongest analytical next step?',
+        options: [
+            'Count gross income as take-home pay so the numbers look balanced.',
+            'Set childcare to $0 without explaining who watches the child during work shifts.',
+            'Verify cost and income assumptions, then explain feasible tradeoffs and structural constraints.'
+        ],
+        answer: 2,
+        why: 'A shortfall is an important sociological finding to analyze. Keep gross pay, deductions, and care coverage realistic rather than inventing free resources.'
+    },
+    3: {
+        q: 'Which statement best addresses an unequal caregiving load without attacking character?',
+        options: [
+            '“You never care about our child’s schedule.”',
+            '“Well, I work harder than you do every single day.”',
+            '“I feel overwhelmed handling afternoon pickup alone. Can we review our weekly shifts and divide Tuesday/Thursday coverage?”'
+        ],
+        answer: 2,
+        why: 'This response uses a gentle start-up, names a specific logistical need, and invites shared problem-solving.'
+    },
+    4: {
+        q: 'Two families react differently when their daycare closes for three days. Which explanation is most sociological?',
+        options: [
+            'Only personal willpower determines how families handle emergencies.',
+            'Employer leave policies, cash reserves, and kin support networks shape which options are actually feasible.',
+            'The simulation proves which family values their child more.'
+        ],
+        answer: 1,
+        why: 'Individual family decisions occur inside unequal institutional and socioeconomic constraints.'
+    },
+    5: {
+        q: 'What distinguishes applying a sociological theory from merely naming it?',
+        options: [
+            'Defining its core mechanism, linking it to specific evidence from your family case, and explaining what it reveals.',
+            'Writing the name of the theory in bold at the end of a paragraph.',
+            'Assuming a single theory explains every human behavior without limitation.'
+        ],
+        answer: 0,
+        why: 'Strong theoretical application connects a conceptual mechanism to concrete case details and considers what an alternative lens might highlight.'
+    },
+    6: {
+        q: 'Which statement represents a defensible sociological projection for your family’s future?',
+        options: [
+            '“Because they love each other, they will never experience role conflict again.”',
+            '“If work hours remain predictable and kin backup holds, Path A is viable; if shifts change, they will need backup Plan B.”',
+            '“An algorithm can predict with 100% certainty whether this couple stays together.”'
+        ],
+        answer: 1,
+        why: 'Defensible projections state underlying assumptions, account for external conditions, and build concrete contingency plans.'
+    }
+};
+
+const EVENTS = {
+    care: {
+        title: 'Childcare Interruption (3 Workdays)',
+        desc: 'The child’s regular care arrangement closes unexpectedly for three workdays. Your family’s jobs and household members remain the same.',
+        choices: [
+            { id: 'cover', title: 'Pay Emergency Backup Care', desc: 'One-time cost: $180. Protects paid work hours ($0 wage loss).', cost: 180, lost: 0, hours: 0, lesson: 'Paying cash protects job standing and wages, but drains emergency reserves and assumes licensed backup care is available on short notice.' },
+            { id: 'leave', title: 'One Adult Takes Unpaid Leave', desc: 'One-time wage loss: $150, plus 18 extra caregiving hours.', cost: 0, lost: 150, hours: 18, lesson: 'Avoiding out-of-pocket daycare fees shifts the cost into lost take-home pay, unpaid care hours, and potential employer attendance penalties.' },
+            { id: 'network', title: 'Mobilize Support Network', desc: 'One-time transport/food cost: $40. Kin/friend contributes 18 hours.', cost: 40, lost: 0, hours: 0, lesson: 'Social support protects household wages, but transfers 18 hours of unpaid labor onto a relative or friend whose own schedule must permit it.' }
+        ]
+    },
+    transport: {
+        title: 'Transit / Vehicle Breakdown (2 Days)',
+        desc: 'The household’s primary way of commuting to work and childcare is unavailable for two full workdays.',
+        choices: [
+            { id: 'rides', title: 'Book Ride-Shares / Rental', desc: 'One-time cost: $80; +2 hours waiting/coordinating.', cost: 80, lost: 0, hours: 2, lesson: 'Spending cash buys time stability and protects work attendance, provided ride-shares or rentals operate reliably in the area.' },
+            { id: 'reroute', title: 'Use Multi-Transfer Transit Route', desc: 'One-time fare cost: $20; +6 extra commuting hours.', cost: 20, lost: 0, hours: 6, lesson: 'Saving money costs 6 hours of time, creating severe role conflict around daycare pickup windows and evening exhaustion.' },
+            { id: 'miss', title: 'Miss One Work Shift', desc: 'One-time lost take-home pay: $90.', cost: 0, lost: 90, hours: 0, lesson: 'Missing a shift solves the immediate physical commute crisis but reduces take-home income and risks job security.' }
+        ]
+    }
+};
+
+const DEFAULT_EXPENSES = [
+    ['Housing (Rent / Mortgage)', 1050],
+    ['Utilities (Electric, Water, Gas)', 150],
+    ['Food & Groceries', 420],
+    ['Transportation / Transit', 160],
+    ['Childcare / Afterschool', 400],
+    ['Healthcare & Out-of-Pocket', 100],
+    ['Phone & Internet', 65],
+    ['Clothing & Household Supplies', 50],
+    ['Debt / Student Loan / Other', 0],
+    ['Monthly Savings Contribution', 25]
+];
+
+/**
+ * ============================================================================
+ * 2. APPLICATION STATE & STORAGE
+ * ============================================================================
+ */
+function createDefaultState() {
+    return {
+        version: 2,
+        step: 0,
+        id: 'FF3D-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+        startedAt: new Date().toISOString(),
+        completedAt: null,
+        completed: {},
+        checks: {},
+        avatars: [
+            { role: 'Adult 1', nameKey: 'aName', skin: '#eab68c', hairStyle: 'bun', hairColor: '#1c1917', shirt: '#0f766e', pants: '#1e293b', scale: 1.0, acc: 'glasses' },
+            { role: 'Adult 2', nameKey: 'bName', skin: '#a66a44', hairStyle: 'short', hairColor: '#452c1e', shirt: '#1d4ed8', pants: '#334155', scale: 0.96, acc: 'apron' },
+            { role: 'Child',   nameKey: 'cName', skin: '#d19466', hairStyle: 'afro', hairColor: '#1c1917', shirt: '#b45309', pants: '#1e3a8a', scale: 0.62, acc: 'backpack' }
+        ],
+        data: {
+            learner: '',
+            course: '',
+            introRead: false,
+            familyName: 'The Rivera-Cole Household',
+            location: 'Tampa, FL',
+            familyForm: 'Cohabiting partners',
+            value: 'Fairness and shared responsibility',
+            origin: '',
+            aName: 'Elena', aAge: 28, aIdentity: 'First-generation college night student & medical assistant', aBio: '',
+            bName: 'Marcus', bAge: 30, bIdentity: 'Shift supervisor at regional logistics warehouse', bBio: '',
+            cName: 'Leo', cAge: 5, cIdentity: 'Curious kindergartener who loves building blocks', cBio: '',
+            network: '',
+            familyReflect: '',
+            jobA: 'Medical Assistant (Clinic)',
+            jobB: 'Warehouse Shift Coordinator',
+            incomeA: 1500,
+            incomeB: 1000,
+            deductions: 300,
+            cash: 500,
+            incomeBasis: '',
+            budgetReflect: '',
+            paidA: 25, studyA: 6, careA: 18, commuteA: 5, otherA: 12,
+            paidB: 30, studyB: 0, careB: 16, commuteB: 6, otherB: 12,
+            workPlan: 'Staggered shifts',
+            carePlan: '',
+            aLove: 'Companionate closeness and commitment',
+            aCommunication: 'Direct expression with listening',
+            aParenting: 'Authoritative',
+            aStyleExample: '',
+            bLove: 'Companionate closeness and commitment',
+            bCommunication: 'Focusing quickly on solutions',
+            bParenting: 'Authoritative',
+            bStyleExample: '',
+            lifestyle: '',
+            conversationPrediction: '',
+            reply: '',
+            repair: '',
+            relationshipReflect: '',
+            agreementMoney: '',
+            agreementCare: '',
+            agreementTalk: '',
+            agreementTime: '',
+            event: 'care',
+            eventPrediction: '',
+            eventChoice: '',
+            eventReason: '',
+            structural: '',
+            burden: '',
+            resourcePlan: '',
+            theory: 'Conflict perspective',
+            theoryDefinition: '',
+            theorySource: '',
+            theoryExample1: '',
+            theoryExample2: '',
+            alternative: 'Symbolic interactionism',
+            theoryLimit: '',
+            futureIncome: 2750,
+            futureDeductions: 330,
+            futureCostChange: 50,
+            futureAssumptions: '',
+            pathA: '',
+            pathB: '',
+            futureConcept1: 'Role conflict',
+            futureApply1: '',
+            futureConcept2: 'Social support',
+            futureApply2: '',
+            futureConcept3: 'Resilience',
+            futureApply3: '',
+            learning: '',
+            nextAction: '',
+            owner: '',
+            reviewDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+            indicator: '',
+            backupPlan: '',
+            ownWork: false,
+            assistance: ''
+        },
+        expenses: DEFAULT_EXPENSES.map(([label, amount]) => ({
+            label,
+            amount,
+            basis: 'Scenario assumption',
+            source: 'Illustrative starting figure — replace or justify with local evidence'
+        })),
+        sources: [
+            { claim: '', source: '', date: new Date().toISOString().slice(0, 10) },
+            { claim: '', source: '', date: new Date().toISOString().slice(0, 10) },
+            { claim: '', source: '', date: new Date().toISOString().slice(0, 10) }
+        ],
+        conversation: null,
+        eventRun: null,
+        eventHistory: []
+    };
+}
+
+let state = createDefaultState();
+try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.version === 2 && parsed.data && Array.isArray(parsed.avatars)) {
+            state = parsed;
+        }
+    }
+} catch (err) {
+    console.warn('Could not load saved state:', err);
+}
+
+function saveState() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        const el = document.getElementById('save-indicator');
+        if (el) el.textContent = 'Autosaved ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (err) {
+        const el = document.getElementById('save-indicator');
+        if (el) el.textContent = 'Autosave full — export backup';
+    }
+    updateTopHUD();
+}
+
+function esc(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function money(val) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(val) || 0);
+}
+
+function calcTotals() {
+    const d = state.data;
+    const gross = (Number(d.incomeA) || 0) + (Number(d.incomeB) || 0);
+    const net = gross - (Number(d.deductions) || 0);
+    const spend = state.expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    return { gross, net, spend, balance: net - spend };
+}
+
+function calcHoursLeft(suffix) {
+    const d = state.data;
+    const used = ['paid', 'study', 'care', 'commute', 'other'].reduce((sum, k) => sum + (Number(d[k + suffix]) || 0), 0);
+    return 168 - 56 - used; // 56 hrs sleep reserved
+}
+
+function updateTopHUD() {
+    const famEl = document.getElementById('hud-family-name');
+    if (famEl) famEl.textContent = state.data.familyName || 'Unnamed Household';
+
+    const t = calcTotals();
+    const balEl = document.getElementById('hud-balance');
+    if (balEl) {
+        balEl.textContent = money(t.balance);
+        balEl.className = 'text-sm font-mono ' + (t.balance < 0 ? 'text-rose-400' : 'text-emerald-400');
+    }
+
+    const hrsEl = document.getElementById('hud-hours');
+    if (hrsEl) {
+        const hA = calcHoursLeft('A');
+        const hB = calcHoursLeft('B');
+        hrsEl.textContent = `${hA}h / ${hB}h`;
+        hrsEl.className = 'text-sm font-mono ' + ((hA < 0 || hB < 0) ? 'text-rose-400' : 'text-sky-300');
+    }
+}
+
+/**
+ * ============================================================================
+ * 3. THREE.JS 3D LIVING ROOM & HUMANOID FAMILY BUILDER
+ * ============================================================================
+ */
+let scene, camera, renderer;
+let familyGroup, roomPropsGroup, warningBeaconMesh;
+let characterRigs = [];
+let cameraTarget = new THREE.Vector3(0, 1.5, 0);
+let desiredCameraTarget = new THREE.Vector3(0, 1.5, 0);
+let spherical = { radius: 8.2, theta: 0.25, phi: 1.18 };
+let desiredSpherical = { radius: 8.2, theta: 0.25, phi: 1.18 };
+let isDragging = false, prevMouse = { x: 0, y: 0 };
+let activeGesture = { type: 'idle', until: 0 };
+
+function init3DScene() {
+    const container = document.getElementById('canvas-container');
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1e293b);
+    scene.fog = new THREE.Fog(0x1e293b, 14, 32);
+
+    camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    // Lighting
+    const hemiLight = new THREE.HemisphereLight(0xfffbeb, 0x334155, 0.75);
+    hemiLight.position.set(0, 12, 0);
+    scene.add(hemiLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff7ed, 0.9);
+    sunLight.position.set(6, 10, 7);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 25;
+    const d = 7;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    scene.add(sunLight);
+
+    const warmLampLight = new THREE.PointLight(0xfbbf24, 0.6, 10);
+    warmLampLight.position.set(-3.2, 2.6, -2.0);
+    scene.add(warmLampLight);
+
+    buildLivingRoomEnvironment();
+
+    familyGroup = new THREE.Group();
+    scene.add(familyGroup);
+
+    rebuild3DFamily();
+    updateRoomSceneMood();
+
+    // Pointer / Touch Orbit Controls
+    const dom = renderer.domElement;
+    dom.addEventListener('mousedown', e => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        const dx = e.clientX - prevMouse.x;
+        const dy = e.clientY - prevMouse.y;
+        prevMouse = { x: e.clientX, y: e.clientY };
+        desiredSpherical.theta -= dx * 0.007;
+        desiredSpherical.phi = Math.max(0.45, Math.min(1.48, desiredSpherical.phi - dy * 0.007));
+    });
+
+    dom.addEventListener('touchstart', e => {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+    }, { passive: true });
+    window.addEventListener('touchend', () => { isDragging = false; });
+    window.addEventListener('touchmove', e => {
+        if (!isDragging || e.touches.length !== 1) return;
+        const dx = e.touches[0].clientX - prevMouse.x;
+        const dy = e.touches[0].clientY - prevMouse.y;
+        prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        desiredSpherical.theta -= dx * 0.007;
+        desiredSpherical.phi = Math.max(0.45, Math.min(1.48, desiredSpherical.phi - dy * 0.007));
+    }, { passive: true });
+
+    dom.addEventListener('wheel', e => {
+        e.preventDefault();
+        desiredSpherical.radius = Math.max(4.0, Math.min(13.5, desiredSpherical.radius + e.deltaY * 0.005));
+    }, { passive: false });
+
+    window.addEventListener('resize', () => {
+        if (!container.clientWidth || !container.clientHeight) return;
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    animate3D();
+}
+
+function buildLivingRoomEnvironment() {
+    const room = new THREE.Group();
+
+    // Wooden Floor
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x9a6b47, roughness: 0.75 });
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(10, 0.3, 8), floorMat);
+    floor.position.set(0, -0.15, 0);
+    floor.receiveShadow = true;
+    room.add(floor);
+
+    // Back & Side Walls
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.9 });
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(10, 5.2, 0.25), wallMat);
+    backWall.position.set(0, 2.6, -3.9);
+    backWall.receiveShadow = true;
+    room.add(backWall);
+
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.25, 5.2, 8), wallMat);
+    leftWall.position.set(-4.9, 2.6, 0);
+    leftWall.receiveShadow = true;
+    room.add(leftWall);
+
+    // Warm Area Rug
+    const rugMat = new THREE.MeshStandardMaterial({ color: 0x115e59, roughness: 0.95 });
+    const rug = new THREE.Mesh(new THREE.CylinderGeometry(2.9, 2.9, 0.03, 48), rugMat);
+    rug.position.set(0, 0.02, 0.2);
+    rug.receiveShadow = true;
+    room.add(rug);
+
+    const rugTrim = new THREE.Mesh(
+        new THREE.RingGeometry(2.6, 2.85, 48),
+        new THREE.MeshBasicMaterial({ color: 0xfde68a, side: THREE.DoubleSide })
+    );
+    rugTrim.rotation.x = -Math.PI / 2;
+    rugTrim.position.set(0, 0.04, 0.2);
+    room.add(rugTrim);
+
+    // Window Frame on Back Wall
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+    const windowGlass = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.6, 1.8),
+        new THREE.MeshBasicMaterial({ color: 0xbae6fd })
+    );
+    windowGlass.position.set(1.8, 3.1, -3.76);
+    room.add(windowGlass);
+
+    const winBorder = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.0, 0.08), frameMat);
+    winBorder.position.set(1.8, 3.1, -3.77);
+    room.add(winBorder);
+
+    // Sofa behind the family
+    const sofaMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+    const sofaBase = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.45, 1.1), sofaMat);
+    sofaBase.position.set(0, 0.225, -2.2);
+    sofaBase.castShadow = true;
+    sofaBase.receiveShadow = true;
+    room.add(sofaBase);
+
+    const sofaBack = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.95, 0.28), sofaMat);
+    sofaBack.position.set(0, 0.7, -2.6);
+    sofaBack.castShadow = true;
+    room.add(sofaBack);
+
+    const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.68, 1.1), sofaMat);
+    leftArm.position.set(-1.6, 0.45, -2.2);
+    room.add(leftArm);
+
+    const rightArm = leftArm.clone();
+    rightArm.position.x = 1.6;
+    room.add(rightArm);
+
+    // Floor Lamp (Left Rear)
+    const standMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.5 });
+    const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.5, 16), standMat);
+    lampPole.position.set(-3.2, 1.25, -2.4);
+    room.add(lampPole);
+
+    const lampShade = new THREE.Mesh(
+        new THREE.ConeGeometry(0.45, 0.5, 24, 1, true),
+        new THREE.MeshStandardMaterial({ color: 0xfef3c7, emissive: 0xf59e0b, emissiveIntensity: 0.35, side: THREE.DoubleSide })
+    );
+    lampShade.position.set(-3.2, 2.5, -2.4);
+    room.add(lampShade);
+
+    // Bookshelf & Plant (Right Rear)
+    const shelfMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.8 });
+    const bookcase = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.4, 0.5), shelfMat);
+    bookcase.position.set(3.5, 1.2, -2.8);
+    bookcase.castShadow = true;
+    room.add(bookcase);
+
+    // Potted Plant
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.22, 0.45, 20), new THREE.MeshStandardMaterial({ color: 0xc2410c }));
+    pot.position.set(-3.6, 0.225, 0.8);
+    pot.castShadow = true;
+    room.add(pot);
+
+    const foliage = new THREE.Mesh(new THREE.DodecahedronGeometry(0.45, 1), new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.7 }));
+    foliage.position.set(-3.6, 0.75, 0.8);
+    foliage.castShadow = true;
+    room.add(foliage);
+
+    // Dynamic Props Group (Budget stack, Toy blocks, Crisis beacon)
+    roomPropsGroup = new THREE.Group();
+    room.add(roomPropsGroup);
+
+    // Child's Colorful Toy Blocks on Rug
+    const blockColors = [0xef4444, 0x3b82f6, 0xeab308];
+    blockColors.forEach((col, idx) => {
+        const blk = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.22), new THREE.MeshStandardMaterial({ color: col }));
+        blk.position.set(1.35 + idx * 0.26, 0.12, 1.4 - (idx % 2) * 0.2);
+        blk.rotation.y = idx * 0.4;
+        blk.castShadow = true;
+        roomPropsGroup.add(blk);
+    });
+
+    // Crisis Warning Beacon on Side Table (Visible in Chapter 4)
+    warningBeaconMesh = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.28, 0),
+        new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xdc2626, emissiveIntensity: 0.6 })
+    );
+    warningBeaconMesh.position.set(0, 3.3, 0);
+    warningBeaconMesh.visible = false;
+    room.add(warningBeaconMesh);
+
+    scene.add(room);
+}
+
+function createNameplateSprite(nameText, roleText, statusColor = '#10b981') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d');
+
+    // Rounded pill background
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.86)';
+    ctx.beginPath();
+    ctx.roundRect(16, 16, 480, 128, 28);
+    ctx.fill();
+
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = statusColor;
+    ctx.stroke();
+
+    // Name
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 44px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText((nameText || 'Member').slice(0, 18), 256, 76);
+
+    // Role subtitle
+    ctx.fillStyle = '#fde68a';
+    ctx.font = '600 28px system-ui, -apple-system, sans-serif';
+    ctx.fillText(roleText, 256, 118);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(1.65, 0.52, 1);
+    return sprite;
+}
+
+function buildHumanoidCharacter(cfg, index) {
+    const root = new THREE.Group();
+    const isChild = index === 2;
+    const s = Number(cfg.scale) || (isChild ? 0.62 : 1.0);
+
+    const skinMat = new THREE.MeshStandardMaterial({ color: cfg.skin, roughness: 0.55 });
+    const shirtMat = new THREE.MeshStandardMaterial({ color: cfg.shirt, roughness: 0.7 });
+    const pantsMat = new THREE.MeshStandardMaterial({ color: cfg.pants, roughness: 0.8 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: cfg.hairColor, roughness: 0.85 });
+    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+
+    const bodyGroup = new THREE.Group();
+    bodyGroup.scale.set(s, s, s);
+    root.add(bodyGroup);
+
+    // Legs & Shoes
+    [-0.16, 0.16].forEach(xOff => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.095, 0.75, 16), pantsMat);
+        leg.position.set(xOff, 0.42, 0);
+        leg.castShadow = true;
+        bodyGroup.add(leg);
+
+        const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.12, 0.28), shoeMat);
+        shoe.position.set(xOff, 0.06, 0.05);
+        shoe.castShadow = true;
+        bodyGroup.add(shoe);
+    });
+
+    // Pelvis / Hips
+    const hips = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.25, 0.22, 20), pantsMat);
+    hips.position.set(0, 0.84, 0);
+    hips.castShadow = true;
+    bodyGroup.add(hips);
+
+    // Torso / Shirt
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.27, 0.74, 24), shirtMat);
+    torso.position.set(0, 1.28, 0);
+    torso.castShadow = true;
+    bodyGroup.add(torso);
+
+    // Neck
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.11, 0.16, 16), skinMat);
+    neck.position.set(0, 1.70, 0);
+    bodyGroup.add(neck);
+
+    // Articulated Arms
+    const leftArmPivot = new THREE.Group();
+    leftArmPivot.position.set(-0.38, 1.55, 0);
+    const leftArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.075, 0.62, 16), shirtMat);
+    leftArmMesh.position.set(0, -0.26, 0);
+    leftArmMesh.castShadow = true;
+    leftArmPivot.add(leftArmMesh);
+    const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16), skinMat);
+    leftHand.position.set(0, -0.60, 0);
+    leftArmPivot.add(leftHand);
+    leftArmPivot.rotation.z = 0.14;
+    bodyGroup.add(leftArmPivot);
+
+    const rightArmPivot = new THREE.Group();
+    rightArmPivot.position.set(0.38, 1.55, 0);
+    const rightArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.075, 0.62, 16), shirtMat);
+    rightArmMesh.position.set(0, -0.26, 0);
+    rightArmMesh.castShadow = true;
+    rightArmPivot.add(rightArmMesh);
+    const rightHand = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16), skinMat);
+    rightHand.position.set(0, -0.60, 0);
+    rightArmPivot.add(rightHand);
+    rightArmPivot.rotation.z = -0.14;
+    bodyGroup.add(rightArmPivot);
+
+    // Head Group
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 2.02, 0);
+    bodyGroup.add(headGroup);
+
+    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.29, 28, 28), skinMat);
+    headMesh.scale.set(1, 1.08, 0.98);
+    headMesh.castShadow = true;
+    headGroup.add(headMesh);
+
+    // Ears
+    [-0.28, 0.28].forEach(xEar => {
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), skinMat);
+        ear.position.set(xEar, 0, -0.02);
+        headGroup.add(ear);
+    });
+
+    // Eyes & Pupils
+    const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const pupilMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+    [-0.10, 0.10].forEach(xEye => {
+        const eyeW = new THREE.Mesh(new THREE.SphereGeometry(0.042, 14, 14), eyeWhiteMat);
+        eyeW.position.set(xEye, 0.04, 0.255);
+        headGroup.add(eyeW);
+
+        const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.022, 12, 12), pupilMat);
+        pupil.position.set(xEye, 0.04, 0.288);
+        headGroup.add(pupil);
+
+        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.018, 0.02), hairMat);
+        brow.position.set(xEye, 0.11, 0.27);
+        headGroup.add(brow);
+    });
+
+    // Nose
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.09, 12), skinMat);
+    nose.rotation.x = Math.PI / 2;
+    nose.position.set(0, -0.01, 0.30);
+    headGroup.add(nose);
+
+    // Smile / Mouth
+    const mouth = new THREE.Mesh(
+        new THREE.TorusGeometry(0.055, 0.012, 8, 16, Math.PI),
+        new THREE.MeshBasicMaterial({ color: 0x881337 })
+    );
+    mouth.rotation.x = Math.PI;
+    mouth.position.set(0, -0.08, 0.27);
+    headGroup.add(mouth);
+
+    // Hair Styles
+    if (cfg.hairStyle === 'short') {
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.305, 24, 24, 0, Math.PI * 2, 0, Math.PI * 0.58), hairMat);
+        cap.position.y = 0.03;
+        headGroup.add(cap);
+    } else if (cfg.hairStyle === 'bun') {
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.305, 24, 24, 0, Math.PI * 2, 0, Math.PI * 0.6), hairMat);
+        cap.position.y = 0.03;
+        headGroup.add(cap);
+        const bun = new THREE.Mesh(new THREE.SphereGeometry(0.13, 18, 18), hairMat);
+        bun.position.set(0, 0.34, -0.12);
+        headGroup.add(bun);
+    } else if (cfg.hairStyle === 'long') {
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.31, 24, 24, 0, Math.PI * 2, 0, Math.PI * 0.6), hairMat);
+        cap.position.y = 0.03;
+        headGroup.add(cap);
+        const backHair = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.55, 0.26), hairMat);
+        backHair.position.set(0, -0.12, -0.14);
+        headGroup.add(backHair);
+    } else if (cfg.hairStyle === 'afro') {
+        const afro = new THREE.Mesh(new THREE.SphereGeometry(0.38, 24, 24), hairMat);
+        afro.position.set(0, 0.10, -0.03);
+        headGroup.add(afro);
+    } else if (cfg.hairStyle === 'cap') {
+        const hatMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 });
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(0.31, 24, 24, 0, Math.PI * 2, 0, Math.PI * 0.52), hatMat);
+        dome.position.y = 0.05;
+        headGroup.add(dome);
+        const visor = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.03, 0.25), hatMat);
+        visor.position.set(0, 0.08, 0.26);
+        headGroup.add(visor);
+    }
+
+    // Accessories
+    if (cfg.acc === 'glasses') {
+        const frameM = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+        [-0.10, 0.10].forEach(xG => {
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.009, 8, 20), frameM);
+            rim.position.set(xG, 0.04, 0.29);
+            headGroup.add(rim);
+        });
+        const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.012, 0.012), frameM);
+        bridge.position.set(0, 0.04, 0.29);
+        headGroup.add(bridge);
+    } else if (cfg.acc === 'apron') {
+        const apron = new THREE.Mesh(
+            new THREE.BoxGeometry(0.46, 0.68, 0.06),
+            new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.8 })
+        );
+        apron.position.set(0, 1.15, 0.28);
+        bodyGroup.add(apron);
+    } else if (cfg.acc === 'stethoscope') {
+        const badge = new THREE.Mesh(
+            new THREE.BoxGeometry(0.14, 0.18, 0.03),
+            new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+        );
+        badge.position.set(0.14, 1.42, 0.29);
+        bodyGroup.add(badge);
+    } else if (cfg.acc === 'backpack') {
+        const pack = new THREE.Mesh(
+            new THREE.BoxGeometry(0.42, 0.50, 0.24),
+            new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.7 })
+        );
+        pack.position.set(0, 1.28, -0.32);
+        pack.castShadow = true;
+        bodyGroup.add(pack);
+    }
+
+    // Floating Nameplate Sprite
+    const displayName = state.data[cfg.nameKey] || cfg.role;
+    const roleSubtitle = index === 0 ? (state.data.jobA || 'Adult 1') : index === 1 ? (state.data.jobB || 'Adult 2') : `Age ${state.data.cAge || 5} · Child`;
+    const sprite = createNameplateSprite(displayName, roleSubtitle);
+    sprite.position.set(0, 2.55 * s + 0.35, 0);
+    root.add(sprite);
+
+    return {
+        root,
+        bodyGroup,
+        headGroup,
+        leftArmPivot,
+        rightArmPivot,
+        baseY: 0
+    };
+}
+
+function rebuild3DFamily() {
+    if (!familyGroup) return;
+    while (familyGroup.children.length > 0) {
+        familyGroup.remove(familyGroup.children[0]);
+    }
+    characterRigs = [];
+
+    const positions = [
+        { x: -1.45, z: 0.25, rotY: 0.22 },
+        { x: 0.05,  z: 0.05, rotY: -0.10 },
+        { x: 1.35,  z: 0.55, rotY: -0.32 }
+    ];
+
+    state.avatars.forEach((av, idx) => {
+        const rig = buildHumanoidCharacter(av, idx);
+        rig.root.position.set(positions[idx].x, 0, positions[idx].z);
+        rig.root.rotation.y = positions[idx].rotY;
+        familyGroup.add(rig.root);
+        characterRigs.push(rig);
+    });
+}
+
+function setCameraFocus(target) {
+    if (target === 'all') {
+        desiredCameraTarget.set(0, 1.35, 0);
+        desiredSpherical.radius = 8.2;
+        desiredSpherical.theta = 0.20;
+        desiredSpherical.phi = 1.18;
+    } else if (typeof target === 'number' && characterRigs[target]) {
+        const pos = characterRigs[target].root.position;
+        const h = target === 2 ? 1.0 : 1.5;
+        desiredCameraTarget.set(pos.x, h, pos.z);
+        desiredSpherical.radius = 4.5;
+        desiredSpherical.theta = target === 0 ? -0.25 : target === 1 ? 0.05 : 0.35;
+        desiredSpherical.phi = 1.22;
+    }
+}
+
+function updateRoomSceneMood() {
+    if (!warningBeaconMesh) return;
+    warningBeaconMesh.visible = (state.step === 4);
+    const subEl = document.getElementById('hud-scene-subtitle');
+    if (subEl) {
+        subEl.textContent = CHAPTER_TITLES[state.step] || 'Interactive 3D Family Environment';
+    }
+    if (state.step === 3) {
+        // Face adults slightly toward each other for conversation rehearsal
+        if (characterRigs[0] && characterRigs[1]) {
+            characterRigs[0].root.rotation.y = 0.55;
+            characterRigs[1].root.rotation.y = -0.55;
+        }
+    } else {
+        if (characterRigs[0] && characterRigs[1]) {
+            characterRigs[0].root.rotation.y = 0.22;
+            characterRigs[1].root.rotation.y = -0.10;
+        }
+    }
+}
+
+function trigger3DGesture(type, speakerText, lineText, noteText) {
+    activeGesture = { type, until: performance.now() + 5000 };
+    const overlay = document.getElementById('scene-speech-overlay');
+    if (overlay && lineText) {
+        document.getElementById('speech-speaker').textContent = speakerText;
+        document.getElementById('speech-line').textContent = lineText;
+        document.getElementById('speech-note').textContent = noteText || '';
+        overlay.classList.remove('hidden');
+    }
+}
+
+function hideSpeechOverlay() {
+    const overlay = document.getElementById('scene-speech-overlay');
+    if (overlay) overlay.classList.add('hidden');
+}
+
+function animate3D() {
+    requestAnimationFrame(animate3D);
+    const now = performance.now();
+    const t = now * 0.002;
+
+    // Smooth camera interpolation
+    spherical.radius += (desiredSpherical.radius - spherical.radius) * 0.08;
+    spherical.theta += (desiredSpherical.theta - spherical.theta) * 0.08;
+    spherical.phi += (desiredSpherical.phi - spherical.phi) * 0.08;
+    cameraTarget.lerp(desiredCameraTarget, 0.08);
+
+    camera.position.x = cameraTarget.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+    camera.position.y = cameraTarget.y + spherical.radius * Math.cos(spherical.phi);
+    camera.position.z = cameraTarget.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+    camera.lookAt(cameraTarget);
+
+    // Character idle breathing & active conversation gestures
+    const inGesture = now < activeGesture.until;
+    characterRigs.forEach((rig, i) => {
+        rig.bodyGroup.position.y = Math.sin(t + i * 1.3) * 0.025;
+        rig.headGroup.rotation.y = Math.sin(t * 0.6 + i) * 0.08;
+        rig.headGroup.rotation.x = 0;
+
+        if (inGesture && (i === 0 || i === 1)) {
+            if (activeGesture.type === 'listen') {
+                rig.headGroup.rotation.x = Math.sin(t * 4) * 0.09; // empathetic nodding
+                rig.rightArmPivot.rotation.x = -0.45 + Math.sin(t * 3 + i) * 0.15;
+            } else if (activeGesture.type === 'defend') {
+                rig.headGroup.rotation.y = Math.sin(t * 6) * 0.18; // head shake
+                rig.leftArmPivot.rotation.x = -0.6;
+                rig.rightArmPivot.rotation.x = -0.6;
+            } else if (activeGesture.type === 'pause') {
+                rig.rightArmPivot.rotation.x = -0.8; // raised calm hand
+            }
+        } else {
+            rig.leftArmPivot.rotation.x = Math.sin(t * 0.8 + i) * 0.05;
+            rig.rightArmPivot.rotation.x = -Math.sin(t * 0.8 + i) * 0.05;
+        }
+    });
+
+    if (warningBeaconMesh && warningBeaconMesh.visible) {
+        warningBeaconMesh.rotation.y += 0.04;
+        warningBeaconMesh.position.y = 3.25 + Math.sin(t * 2) * 0.12;
+    }
+
+    renderer.render(scene, camera);
+}
+
+/**
+ * ============================================================================
+ * 4. TRANSPARENT ASSIGNMENT (TILT), VALIDATION & UI HELPERS
+ * ============================================================================
+ */
+function renderField(key, label, opts = {}) {
+    const {
+        type = 'text',
+        min = 0,
+        max,
+        rows = 3,
+        options = null,
+        hint = '',
+        placeholder = '',
+        example = ''
+    } = opts;
+
+    const val = state.data[key] ?? '';
+    const isTextarea = type === 'textarea';
+    const curLen = String(val).trim().length;
+    const isMet = curLen >= min;
+
+    let controlHTML = '';
+    if (options) {
+        controlHTML = `<select data-key="${key}" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-600">
+            <option value="">Choose…</option>
+            ${options.map(o => `<option value="${esc(o)}" ${val === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}
+        </select>`;
+    } else if (isTextarea) {
+        controlHTML = `<textarea data-key="${key}" data-min="${min}" rows="${rows}" maxlength="4000" placeholder="${esc(placeholder)}" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-600">${esc(val)}</textarea>`;
+    } else {
+        controlHTML = `<input data-key="${key}" type="${type}" value="${esc(val)}" ${min && !isTextarea ? `min="${min}"` : ''} ${max !== undefined ? `max="${max}"` : ''} ${type === 'number' ? 'step="any"' : ''} placeholder="${esc(placeholder)}" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-600">`;
+    }
+
+    const counterBadge = (isTextarea && min > 0)
+        ? `<span id="cnt-${key}" class="char-counter ${isMet ? 'met' : 'unmet'}">${curLen} / ${min} chars min ${isMet ? '✓' : ''}</span>`
+        : '';
+
+    const exampleBox = example
+        ? `<div class="mt-1.5 text-xs bg-amber-50/90 border-l-3 border-amber-500 px-2.5 py-1.5 text-amber-950 rounded-r"><b>What strong work looks like:</b> ${example}</div>`
+        : '';
+
+    return `<div class="space-y-1">
+        <div class="flex justify-between items-baseline gap-2">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">${label}</label>
+            ${counterBadge}
+        </div>
+        ${controlHTML}
+        ${hint ? `<p class="text-xs text-slate-500">${hint}</p>` : ''}
+        ${exampleBox}
+    </div>`;
+}
+
+function renderConceptAccordion(conceptKeys) {
+    return `<details class="bg-slate-100 rounded-xl border border-slate-200 px-4 py-2.5 text-xs">
+        <summary class="font-bold text-teal-800 cursor-pointer select-none">📚 Textbook Concept Reference for This Chapter (${conceptKeys.length} concepts)</summary>
+        <div class="mt-2.5 space-y-2 border-t border-slate-200 pt-2.5 text-slate-700">
+            ${conceptKeys.map(k => `<p><strong class="text-slate-900">${esc(k)}:</strong> ${esc(CONCEPTS[k] || THEORIES[k]?.def || '')}</p>`).join('')}
+        </div>
+    </details>`;
+}
+
+function renderConceptCheckQuiz(chapterNum) {
+    const q = QUESTIONS[chapterNum];
+    if (!q) return '';
+    const saved = state.checks[chapterNum] || {};
+    return `<section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-900">Check Your Understanding (Chapter ${chapterNum})</h3>
+            ${saved.passed ? `<span class="text-xs font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">✓ Completed</span>` : `<span class="text-xs text-amber-700 font-semibold">Required</span>`}
+        </div>
+        <p class="text-xs font-semibold text-slate-800">${esc(q.q)}</p>
+        <div class="space-y-1.5">
+            ${q.options.map((opt, idx) => `
+                <label class="flex items-start gap-2.5 p-2.5 rounded-lg border ${saved.selected === idx ? 'bg-teal-50 border-teal-500' : 'bg-slate-50 border-slate-200'} cursor-pointer text-xs">
+                    <input type="radio" name="quiz-${chapterNum}" value="${idx}" ${saved.selected === idx ? 'checked' : ''} onchange="selectQuizOption(${chapterNum}, ${idx})" class="mt-0.5 accent-teal-600">
+                    <span>${esc(opt)}</span>
+                </label>
+            `).join('')}
+        </div>
+        <button onclick="checkQuizAnswer(${chapterNum})" class="px-3.5 py-1.5 bg-teal-700 hover:bg-teal-600 text-white rounded-lg text-xs font-bold transition">Verify Answer</button>
+        ${saved.feedback ? `<div class="p-3 rounded-lg text-xs ${saved.passed ? 'bg-emerald-50 text-emerald-900 border border-emerald-300' : 'bg-amber-50 text-amber-900 border border-amber-300'}">
+            <strong>${saved.passed ? 'Correct! ' : 'Review & try again: '}</strong>${esc(saved.feedback)}
+        </div>` : ''}
+    </section>`;
+}
+
+/**
+ * ============================================================================
+ * 5. CHAPTER RENDERERS (STEPS 0 TO 7)
+ * ============================================================================
+ */
+function renderStep0() {
+    return `
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-5 shadow-lg">
+            <span class="text-[11px] uppercase tracking-widest text-amber-300 font-bold">Transparency in Learning & Teaching (TILT)</span>
+            <h2 class="text-2xl font-serif font-bold mt-1">Build a 3D Family. Investigate Real Constraints.</h2>
+            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Customize your 3D household members in the living room on the left, manage their monthly budget and 168-hour weekly schedule, rehearse relationship agreements, and analyze how structural disruptions shape family life.</p>
+        </div>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider border-b pb-1.5">1 · Purpose (Why We Do This Activity)</h3>
+            <p class="text-xs text-slate-700 leading-relaxed"><strong>Skills You Will Practice:</strong> You will practice <em>applying</em> sociological theories and textbook concepts to concrete family scenarios, <em>analyzing</em> how institutional constraints interact with household budgets and time, <em>evaluating</em> trade-offs during an unexpected crisis, and <em>synthesizing</em> evidence into a structured 6-section portfolio.</p>
+            <p class="text-xs text-slate-700 leading-relaxed"><strong>Content Knowledge You Will Gain:</strong> You will examine variation in family forms, unpaid care work, role conflict, parenting and communication patterns, social support networks, and theoretical lenses (Conflict, Symbolic Interactionism, Functionalism, Family Systems, and Feminist perspectives) relevant to your life and career beyond college.</p>
+        </section>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-2.5">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider border-b pb-1.5">2 · Tasks (Step-by-Step Workflow)</h3>
+            <ol class="list-decimal pl-5 text-xs text-slate-700 space-y-1.5">
+                <li><strong>Chapter 1 (Identity & 3D Avatars):</strong> Customize the 3D appearance of Adult 1, Adult 2, and a Child under 10. Choose roles and family backgrounds outside stereotypical norms and write their biographies.</li>
+                <li><strong>Chapter 2 (Money & 168 Hours):</strong> Allocate a monthly household budget ($30,000/yr starting scenario) and justify every single expense line (including $0 lines) with evidence or clear assumptions. Balance each adult’s 168-hour week.</li>
+                <li><strong>Chapter 3 (Relationships):</strong> Apply love, parenting, and communication concepts; test a live 3D disagreement rehearsal; and draft a 4-part household agreement.</li>
+                <li><strong>Chapter 4 (Disruption Scenario):</strong> Predict and test a 3-day childcare or 2-day transit crisis in 3D and analyze who bears the financial, time, and emotional burden.</li>
+                <li><strong>Chapter 5 & 6 (Theory & Future):</strong> Apply a primary sociological theory twice, contrast it with an alternative lens, apply 3 additional textbook concepts to future paths, and export your 6-section report and completion certificate.</li>
+            </ol>
+        </section>
+
+        <section class="bg-teal-50/70 rounded-xl border border-teal-200 p-4 shadow-sm space-y-2.5">
+            <h3 class="text-sm font-bold text-teal-950 uppercase tracking-wider border-b border-teal-200 pb-1.5">3 · Criteria for Success (200-Point Rubric Guide)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-700">
+                <div class="bg-white p-2.5 rounded-lg border border-teal-100">
+                    <strong class="text-teal-900 block">Content (Excellent):</strong>
+                    All 6 sections complete; sociological theory clearly identified, defined, and applied properly; at least <strong>5 textbook concepts</strong> used accurately across sections; <strong>all 10 expenses explained</strong> with evidence.
+                </div>
+                <div class="bg-white p-2.5 rounded-lg border border-teal-100">
+                    <strong class="text-teal-900 block">Originality & Creativity (Excellent):</strong>
+                    Selects family roles and backgrounds outside traditional stereotypes; customizes the 3D family diorama and includes visual charts/tables or artistic elements in the exported portfolio.
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900">Set Up Your Portfolio Identity</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                ${renderField('learner', 'Your Name or Alias (For Certificate)', { placeholder: 'e.g., Jordan Taylor' })}
+                ${renderField('course', 'Course & Section', { placeholder: 'e.g., SYG 2430 · Marriage & Family' })}
+            </div>
+            <label class="flex items-start gap-2.5 text-xs text-slate-700 pt-1 cursor-pointer">
+                <input type="checkbox" data-key="introRead" ${state.data.introRead ? 'checked' : ''} class="mt-0.5 accent-teal-600 w-4 h-4">
+                <span>I understand this simulation uses a fictional family case, that live character counters show minimum required depth, and that I can save a backup file at any time.</span>
+            </label>
+        </section>
+    `;
+}
+
+function renderStep1() {
+    return `
+        <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-teal-700">Chapter 1 of 6 · Identity, Originality & 3D Avatar Studio</span>
+            <h2 class="text-xl font-serif font-bold text-slate-900 mt-0.5">Who Are We?</h2>
+            <p class="text-xs text-slate-600 mt-1">Customize your 3D family members below and watch them update live in the living room. For maximum <strong>Originality</strong> on the rubric, design roles and arrangements outside traditional stereotypes.</p>
+        </div>
+
+        <!-- 3D Avatar Customizer Cards -->
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="text-sm font-bold text-slate-900">🎨 Customize 3D Family Members</h3>
+                <button onclick="randomizeAvatars()" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold px-2.5 py-1 rounded-lg transition">🎲 Randomize Look</button>
+            </div>
+            <div class="space-y-4">
+                ${state.avatars.map((av, idx) => {
+                    const prefix = ['a', 'b', 'c'][idx];
+                    const roleLabel = idx === 2 ? 'Child (Under Age 10)' : `Adult ${idx + 1}`;
+                    return `<div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold uppercase tracking-wider bg-slate-900 text-amber-300 px-2.5 py-0.5 rounded-full">${roleLabel}</span>
+                            <button onclick="setCameraFocus(${idx})" class="text-xs text-teal-700 hover:underline font-semibold">Zoom Camera to ${esc(state.data[prefix + 'Name'] || roleLabel)} 🎥</button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                            ${renderField(prefix + 'Name', 'First Name')}
+                            ${renderField(prefix + 'Age', 'Age', { type: 'number', min: idx === 2 ? 0 : 18, max: idx === 2 ? 9 : 99 })}
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Skin Tone</label>
+                                <select onchange="updateAvatarProp(${idx}, 'skin', this.value)" class="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs">
+                                    ${SKIN_TONES.map(([hex, label]) => `<option value="${hex}" ${av.skin === hex ? 'selected' : ''}>${label}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Hair Style</label>
+                                <select onchange="updateAvatarProp(${idx}, 'hairStyle', this.value)" class="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs">
+                                    ${HAIR_STYLES.map(([id, label]) => `<option value="${id}" ${av.hairStyle === id ? 'selected' : ''}>${label}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Hair Color</label>
+                                <select onchange="updateAvatarProp(${idx}, 'hairColor', this.value)" class="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs">
+                                    ${HAIR_COLORS.map(([hex, label]) => `<option value="${hex}" ${av.hairColor === hex ? 'selected' : ''}>${label}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Top Outfit Color</label>
+                                <select onchange="updateAvatarProp(${idx}, 'shirt', this.value)" class="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs">
+                                    ${OUTFIT_COLORS.map(([hex, label]) => `<option value="${hex}" ${av.shirt === hex ? 'selected' : ''}>${label}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Accessory</label>
+                                <select onchange="updateAvatarProp(${idx}, 'acc', this.value)" class="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs">
+                                    ${ACCESSORIES.map(([id, label]) => `<option value="${id}" ${av.acc === id ? 'selected' : ''}>${label}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="col-span-2">
+                                ${renderField(prefix + 'Identity', 'Role / Cultural or Personal Background', { placeholder: 'e.g., Night-shift nurse & amateur musician' })}
+                            </div>
+                        </div>
+                        ${renderField(prefix + 'Bio', `${state.data[prefix + 'Name'] || roleLabel}’s Biography`, {
+                            type: 'textarea',
+                            min: 30,
+                            rows: 2,
+                            placeholder: 'Write 2–4 sentences covering upbringing, personal strengths, and role in the home...',
+                            example: '“Elena grew up in a bilingual multigenerational household where she helped care for younger cousins. She brings strong organizational skills and calm problem-solving, though juggling night classes and morning clinic shifts tests her stamina.”'
+                        })}
+                    </div>`;
+                }).join('')}
+            </div>
+        </section>
+
+        <!-- Household Context & Support Network -->
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900">Household Structure & Social Support</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                ${renderField('familyName', 'Household Title')}
+                ${renderField('location', 'City & State')}
+                ${renderField('familyForm', 'Adult Relationship Arrangement', {
+                    options: ['Married partners', 'Cohabiting partners', 'Blended family partners', 'Co-parents in one household', 'Adult relatives sharing care', 'Chosen family co-caregivers']
+                })}
+                ${renderField('value', 'Core Guiding Family Value', {
+                    options: ['Security', 'Connection', 'Education and growth', 'Community participation', 'Fairness and shared responsibility']
+                })}
+            </div>
+            ${renderField('origin', 'How Did This Family Come Together?', {
+                type: 'textarea',
+                min: 20,
+                rows: 2,
+                placeholder: 'Describe their shared history and how they formed this household...'
+            })}
+            ${renderField('network', 'External Support Network & Realistic Limits', {
+                type: 'textarea',
+                min: 25,
+                rows: 2,
+                hint: 'Who lives nearby (kin, friends, neighbors), what can they help with, and what limits their availability?',
+                example: '“Marcus’s aunt lives 20 minutes away and can watch Leo on occasional Saturdays, but she works full-time Monday–Friday and cannot cover weekday emergencies.”'
+            })}
+            ${renderField('familyReflect', 'Sociological Reflection: Life Course & Socialization', {
+                type: 'textarea',
+                min: 30,
+                rows: 3,
+                hint: 'Connect a specific detail from one member’s biography to the concept of Socialization or Life Course.',
+                example: '“Through childhood socialization in a cooperative household, Elena learned to view caregiving as a shared family duty rather than strictly mother-work, shaping how she negotiates schedules with Marcus.”'
+            })}
+            ${renderConceptAccordion(['Socialization', 'Life course', 'Social support'])}
+        </section>
+
+        ${renderConceptCheckQuiz(1)}
+    `;
+}
+
+function renderStep2() {
+    const t = calcTotals();
+    return `
+        <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-teal-700">Chapter 2 of 6 · Economic Resources & 168-Hour Time Allocation</span>
+            <h2 class="text-xl font-serif font-bold text-slate-900 mt-0.5">What Do We Do?</h2>
+            <p class="text-xs text-slate-600 mt-1">A family’s choices depend on both money and hours in the week. Per the project rubric, <strong>every single expense category must include a justification or source</strong>.</p>
+        </div>
+
+        <!-- Income & Deductions -->
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900">Monthly Income & Deductions (Default: $30,000/yr Gross)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                ${renderField('jobA', `${esc(state.data.aName || 'Adult 1')} Paid Work / Study Role`)}
+                ${renderField('jobB', `${esc(state.data.bName || 'Adult 2')} Paid Work / Study Role`)}
+                ${renderField('incomeA', `${esc(state.data.aName || 'Adult 1')} Monthly Gross ($)`, { type: 'number', min: 0, max: 100000 })}
+                ${renderField('incomeB', `${esc(state.data.bName || 'Adult 2')} Monthly Gross ($)`, { type: 'number', min: 0, max: 100000 })}
+                ${renderField('deductions', 'Combined Monthly Tax/Payroll Deductions ($)', { type: 'number', min: 0, max: 100000 })}
+                ${renderField('cash', 'Starting Emergency Savings Cash ($)', { type: 'number', min: 0, max: 100000 })}
+            </div>
+            ${renderField('incomeBasis', 'Income, Wage & Deduction Justification', {
+                type: 'textarea',
+                min: 25,
+                rows: 2,
+                example: '“Elena earns $18/hr working 20 hrs/wk at an outpatient clinic ($1,500/mo gross) while taking night classes; Marcus earns $1,000/mo part-time. Combined payroll taxes and clinic dental deductions total $300/mo.”'
+            })}
+        </section>
+
+        <!-- Monthly Expense Table -->
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <h3 class="text-sm font-bold text-slate-900">10-Category Monthly Budget & Evidence</h3>
+                <span id="budget-summary-pill" class="text-xs font-mono font-bold px-2.5 py-1 rounded-full ${t.balance < 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
+                    Net ${money(t.net)} − Outflow ${money(t.spend)} = ${money(t.balance)}
+                </span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-300">
+                            <th class="p-2 text-left">Expense Category</th>
+                            <th class="p-2 text-left w-24">Monthly $</th>
+                            <th class="p-2 text-left w-36">Evidence Basis</th>
+                            <th class="p-2 text-left">Source or Logical Justification (Required)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        ${state.expenses.map((exp, i) => `
+                            <tr>
+                                <td class="p-2 font-semibold text-slate-800">${esc(exp.label)}</td>
+                                <td class="p-2"><input type="number" min="0" max="100000" step="1" value="${exp.amount}" oninput="updateExpense(${i}, 'amount', this.value)" class="w-full px-2 py-1 border border-slate-300 rounded font-mono"></td>
+                                <td class="p-2">
+                                    <select onchange="updateExpense(${i}, 'basis', this.value)" class="w-full px-1.5 py-1 border border-slate-300 rounded bg-white">
+                                        <option ${exp.basis === 'Scenario assumption' ? 'selected' : ''}>Scenario assumption</option>
+                                        <option ${exp.basis === 'Researched evidence' ? 'selected' : ''}>Researched evidence</option>
+                                    </select>
+                                </td>
+                                <td class="p-2"><input type="text" value="${esc(exp.source)}" oninput="updateExpense(${i}, 'source', this.value)" placeholder="Explain source or $0 arrangement..." class="w-full px-2 py-1 border border-slate-300 rounded"></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${renderField('budgetReflect', 'Analyze Budget Tradeoffs or Shortfalls', {
+                type: 'textarea',
+                min: 30,
+                rows: 2,
+                example: '“Housing ($1,050) and childcare ($400) consume 66% of our $2,200 take-home pay, leaving only $25/month for savings. Any unexpected car repair immediately pushes the family into deficit.”'
+            })}
+        </section>
+
+        <!-- 168-Hour Time Allocation -->
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900">A Week Has 168 Hours (56 Hours Reserved for Sleep)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                ${['A', 'B'].map((suf, idx) => {
+                    const name = state.data[idx === 0 ? 'aName' : 'bName'] || `Adult ${idx + 1}`;
+                    const left = calcHoursLeft(suf);
+                    return `<div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <strong class="text-xs text-slate-900">${esc(name)}’s Weekly Load</strong>
+                            <span id="hrs-left-${suf}" class="text-xs font-mono font-bold ${left < 0 ? 'text-rose-600' : 'text-teal-700'}">${left}h free</span>
+                        </div>
+                        ${renderField('paid' + suf, 'Paid Work Hours / Wk', { type: 'number', min: 0, max: 112 })}
+                        ${renderField('study' + suf, 'Classes & Study Hours / Wk', { type: 'number', min: 0, max: 112 })}
+                        ${renderField('care' + suf, 'Unpaid Care & Housework / Wk', { type: 'number', min: 0, max: 112 })}
+                        ${renderField('commute' + suf, 'Commute & Transit / Wk', { type: 'number', min: 0, max: 112 })}
+                        ${renderField('other' + suf, 'Personal Care / Other / Wk', { type: 'number', min: 0, max: 112 })}
+                    </div>`;
+                }).join('')}
+            </div>
+            ${renderField('workPlan', 'Household Shift Pattern', {
+                options: ['Overlapping day shifts', 'Staggered shifts', 'One adult in paid work', 'Variable or rotating shifts', 'Other arrangement']
+            })}
+            ${renderField('carePlan', 'Childcare Coverage & Unpaid Care Plan', {
+                type: 'textarea',
+                min: 30,
+                rows: 2,
+                example: '“Because Elena works mornings and Marcus works afternoon/evening warehouse shifts, they stagger care for Leo during the day, relying on an afterschool program for the 3-hour overlap between 2pm and 5pm.”'
+            })}
+            ${renderConceptAccordion(['Role conflict', 'Unpaid care work', 'Structural constraint'])}
+        </section>
+
+        ${renderConceptCheckQuiz(2)}
+    `;
+}
+
+function renderStep3() {
+    const loveOpts = ['Companionate closeness and commitment', 'Passionate attraction', 'Developing intimacy and commitment', 'Course-specific framework'];
+    const commOpts = ['Direct expression with listening', 'Avoiding difficult conversations', 'Focusing quickly on solutions', 'Seeking reassurance'];
+    const parentOpts = ['Authoritative', 'Authoritarian', 'Permissive', 'Uninvolved', 'Mixed or adapting pattern'];
+
+    return `
+        <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-teal-700">Chapter 3 of 6 · Love, Parenting & 3D Conflict Rehearsal</span>
+            <h2 class="text-xl font-serif font-bold text-slate-900 mt-0.5">How Do We Live?</h2>
+            <p class="text-xs text-slate-600 mt-1">Examine how both adults approach closeness, parenting, and conflict. Test a live response in the 3D living room and establish a 4-point household agreement.</p>
+        </div>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900">Love, Communication & Parenting Patterns</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                ${['a', 'b'].map((p, idx) => {
+                    const name = state.data[p + 'Name'] || `Adult ${idx + 1}`;
+                    return `<div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
+                        <strong class="text-xs font-bold text-slate-900 block border-b pb-1">${esc(name)}</strong>
+                        ${renderField(p + 'Love', 'Love / Closeness Pattern', { options: loveOpts })}
+                        ${renderField(p + 'Communication', 'Communication Style', { options: commOpts })}
+                        ${renderField(p + 'Parenting', 'Parenting Style', { options: parentOpts })}
+                        ${renderField(p + 'StyleExample', `Illustrate ${name}’s Style in Daily Life`, {
+                            type: 'textarea',
+                            min: 35,
+                            rows: 3,
+                            example: `“${name} practices authoritative parenting by explaining bedtime rules calmly to ${state.data.cName || 'the child'} while listening to their feelings about school.”`
+                        })}
+                    </div>`;
+                }).join('')}
+            </div>
+            ${renderField('lifestyle', 'Everyday Routines, Culture & Shared Activities', {
+                type: 'textarea',
+                min: 25,
+                rows: 2,
+                placeholder: 'How do their values, budget, and schedules shape everyday family rituals?'
+            })}
+            ${renderConceptAccordion(['Companionate love', 'Authoritative parenting', 'Authoritarian parenting', 'Permissive parenting', 'Uninvolved parenting'])}
+        </section>
+
+        <!-- Interactive 3D Conversation Rehearsal -->
+        <section class="bg-teal-950 text-white rounded-xl p-4 shadow-md space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] uppercase tracking-widest text-amber-300 font-bold">🎭 Live 3D Dialogue Rehearsal</span>
+                <span class="text-xs text-teal-200">Watch avatars react in 3D</span>
+            </div>
+            <blockquote class="font-serif italic text-base bg-slate-900/70 p-3 rounded-lg border-l-4 border-amber-400">
+                “You never notice what needs doing! I am always the one remembering school forms and arranging pickup.”
+            </blockquote>
+            <div class="text-slate-900 bg-white p-3 rounded-lg">
+                ${renderField('conversationPrediction', '1. Predict the Interaction Pattern Before Replying', {
+                    type: 'textarea',
+                    min: 25,
+                    rows: 2,
+                    hint: 'Identify the conflict pattern in the quote above (e.g., criticism vs. complaint about mental load) and predict what happens next.'
+                })}
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                ${[
+                    ['defend', 'Defend & Counter-Blame', '“I work hard too! You always make me the villain.”'],
+                    ['pause', 'Planned 20-Min Pause', '“I want to solve this fairly. Let’s take 20 minutes to cool down and compare calendars at 7:00.”'],
+                    ['listen', 'Active Listen & Specify', '“You’re carrying the mental load for pickup. Let’s list the exact days and split ownership now.”']
+                ].map(([id, title, quote]) => `
+                    <button onclick="selectReplyBranch('${id}')" class="text-left p-2.5 rounded-lg border transition ${state.data.reply === id ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold' : 'bg-slate-900/80 text-slate-200 border-slate-700 hover:bg-slate-800'}">
+                        <strong class="block text-xs">${title}</strong>
+                        <span class="block text-[11px] opacity-85 mt-1">${quote}</span>
+                    </button>
+                `).join('')}
+            </div>
+            <button onclick="run3DConversationRehearsal()" class="w-full py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-extrabold rounded-lg text-xs uppercase tracking-wider transition shadow">▶ Play Selected Response in 3D Living Room</button>
+            ${state.conversation ? `<div class="bg-slate-900/90 border border-teal-500/50 rounded-lg p-3 text-xs space-y-1">
+                <strong class="text-amber-300 block">Partner’s Simulated Response:</strong>
+                <p class="italic text-white">${esc(state.conversation.response)}</p>
+                <p class="text-slate-300">${esc(state.conversation.explanation)}</p>
+            </div>` : ''}
+        </section>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            ${renderField('repair', 'Write Your Own Revised Response (De-escalating & Specific)', {
+                type: 'textarea',
+                min: 25,
+                rows: 2,
+                example: '“I hear how exhausting it is to track every school notice alone. Let’s put a shared calendar on the fridge tonight and make me responsible for Tuesday/Thursday pickups.”'
+            })}
+            ${renderField('relationshipReflect', 'Analyze Your Revision Using Conflict Concepts', {
+                type: 'textarea',
+                min: 30,
+                rows: 2,
+                hint: 'Reference concepts like Criticism, Defensiveness, Stonewalling, or Active Listening, and note one structural limit.'
+            })}
+            <h3 class="text-sm font-bold text-slate-900 pt-2 border-t">4-Part Household Relationship Agreement</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                ${renderField('agreementMoney', '1 · Money & Spending Decisions', { type: 'textarea', min: 20, rows: 2 })}
+                ${renderField('agreementCare', '2 · Unpaid Care & Mental Load', { type: 'textarea', min: 20, rows: 2 })}
+                ${renderField('agreementTalk', '3 · Conflict & Cool-Down Rules', { type: 'textarea', min: 20, rows: 2 })}
+                ${renderField('agreementTime', '4 · Shared Time & Review Date', { type: 'textarea', min: 20, rows: 2 })}
+            </div>
+            ${renderConceptAccordion(['Criticism', 'Contempt', 'Defensiveness', 'Stonewalling', 'Active listening'])}
+        </section>
+
+        ${renderConceptCheckQuiz(3)}
+    `;
+}
+
+function renderStep4() {
+    const evKey = state.data.event || 'care';
+    const ev = EVENTS[evKey] || EVENTS.care;
+    const t = calcTotals();
+    const run = state.eventRun;
+
+    return `
+        <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-rose-700">Chapter 4 of 6 · Structural Disruptions & Unequal Burdens</span>
+            <h2 class="text-xl font-serif font-bold text-slate-900 mt-0.5">What Issues Arise?</h2>
+            <p class="text-xs text-slate-600 mt-1">Notice the red emergency beacon in your 3D living room. Choose an unexpected disruption, record your prediction, and compare how money, time, and social support interact.</p>
+        </div>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900">1 · Select Disruption Scenario</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                ${Object.entries(EVENTS).map(([k, item]) => `
+                    <button onclick="selectDisruptionEvent('${k}')" class="text-left p-3 rounded-xl border transition ${evKey === k ? 'bg-rose-50 border-rose-600 ring-1 ring-rose-600' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}">
+                        <strong class="text-xs font-bold text-slate-900 block">${esc(item.title)}</strong>
+                        <span class="text-[11px] text-slate-600 mt-1 block">${esc(item.desc)}</span>
+                    </button>
+                `).join('')}
+            </div>
+
+            ${renderField('eventPrediction', '2 · Predict the Financial & Time Impact Before Running', {
+                type: 'textarea',
+                min: 30,
+                rows: 2,
+                hint: 'What will your family try first, and how will it affect their monthly balance or weekly hours?'
+            })}
+
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 pt-1">3 · Choose Response Strategy & Reveal Outcome</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                ${ev.choices.map(ch => `
+                    <button onclick="selectEventChoice('${ch.id}')" class="text-left p-2.5 rounded-lg border text-xs transition ${state.data.eventChoice === ch.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-800 border-slate-300 hover:bg-slate-100'}">
+                        <strong class="block">${esc(ch.title)}</strong>
+                        <span class="block text-[11px] opacity-80 mt-1">${esc(ch.desc)}</span>
+                    </button>
+                `).join('')}
+            </div>
+
+            <button onclick="executeDisruptionEvent()" class="w-full py-2 bg-rose-700 hover:bg-rose-600 text-white font-bold rounded-lg text-xs uppercase tracking-wider transition shadow">⚡ Simulate Disruption Outcome in 3D</button>
+
+            ${run ? `<div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5 space-y-2 text-xs">
+                <strong class="text-rose-950 block">Simulated Impact (${esc(run.title)} — ${esc(run.option)}):</strong>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-white p-2 rounded border border-rose-100">
+                        <span class="block text-[10px] text-slate-500">One-Time Cash Hit</span>
+                        <strong class="text-sm font-mono text-rose-700">${money(-(run.cost + run.lost))}</strong>
+                    </div>
+                    <div class="bg-white p-2 rounded border border-rose-100">
+                        <span class="block text-[10px] text-slate-500">Affected Mo. Balance</span>
+                        <strong class="text-sm font-mono ${(t.balance - run.cost - run.lost) < 0 ? 'text-rose-700' : 'text-emerald-700'}">${money(t.balance - run.cost - run.lost)}</strong>
+                    </div>
+                    <div class="bg-white p-2 rounded border border-rose-100">
+                        <span class="block text-[10px] text-slate-500">Extra Household Hrs</span>
+                        <strong class="text-sm font-mono text-slate-900">+${run.hours} hrs</strong>
+                    </div>
+                </div>
+                <p class="text-slate-700">${esc(run.lesson)}</p>
+            </div>` : ''}
+        </section>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            ${renderField('eventReason', 'Why Choose This Option Over the Alternatives?', {
+                type: 'textarea',
+                min: 30,
+                rows: 2,
+                hint: 'Reference your specific budget numbers, emergency cash, or support network limits.'
+            })}
+            ${renderField('structural', 'Identify the Structural Constraint Shaping These Options', {
+                type: 'textarea',
+                min: 30,
+                rows: 2,
+                example: '“Because neither Elena’s clinic nor Marcus’s warehouse provides paid family sick leave, an ordinary 3-day daycare closure immediately forces a tradeoff between lost wages and depleting emergency cash.”'
+            })}
+            ${renderField('burden', 'Who Bears the Time, Money, or Emotional Burden?', {
+                type: 'textarea',
+                min: 30,
+                rows: 2
+            })}
+            ${renderField('resourcePlan', 'What Institutional Policy or Community Resource Would Help?', {
+                type: 'textarea',
+                min: 30,
+                rows: 2
+            })}
+            ${renderConceptAccordion(['Structural constraint', 'Role conflict', 'Social support', 'Unpaid care work'])}
+        </section>
+
+        ${renderConceptCheckQuiz(4)}
+    `;
+}
+
+function renderStep5() {
+    const selectedTheory = THEORIES[state.data.theory];
+    return `
+        <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-teal-700">Chapter 5 of 6 · Sociological Theory & Evidence Trail</span>
+            <h2 class="text-xl font-serif font-bold text-slate-900 mt-0.5">How Do We Compare?</h2>
+            <p class="text-xs text-slate-600 mt-1">To earn <strong>Excellent</strong> on the Content rubric, clearly define your chosen sociological perspective in your own words, apply it to two distinct patterns in your family, and compare it with a second perspective.</p>
+        </div>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            ${renderField('theory', 'Primary Sociological Perspective', { options: Object.keys(THEORIES) })}
+            ${selectedTheory ? `<div class="bg-teal-50 border-l-4 border-teal-600 p-3 rounded-r text-xs space-y-1">
+                <strong class="text-teal-950">${esc(state.data.theory)}</strong>
+                <p class="text-teal-900">${esc(selectedTheory.def)}</p>
+                <p class="text-teal-800 italic">Key question: ${esc(selectedTheory.ask)}</p>
+            </div>` : ''}
+            ${renderField('theoryDefinition', 'Define This Perspective in Your Own Words', {
+                type: 'textarea',
+                min: 25,
+                rows: 2
+            })}
+            ${renderField('theorySource', 'Course Reading / Textbook Citation (Chapter, Page, or URL)', {
+                placeholder: 'e.g., OpenStax Introduction to Sociology 3e, Ch. 14.2'
+            })}
+            ${renderField('theoryExample1', 'Application 1: Explain a Budget, Work, or Care Decision', {
+                type: 'textarea',
+                min: 35,
+                rows: 3,
+                example: '“Applying the Conflict Perspective, Marcus’s higher hourly warehouse wage gives his shift schedule priority when daycare closes, illustrating how external wage disparities reproduce unequal bargaining power inside the household.”'
+            })}
+            ${renderField('theoryExample2', 'Application 2: Explain a Communication or Role Pattern', {
+                type: 'textarea',
+                min: 35,
+                rows: 3
+            })}
+            ${renderField('alternative', 'Select a Contrasting Sociological Perspective', { options: Object.keys(THEORIES) })}
+            ${renderField('theoryLimit', 'What Would the Contrasting Perspective Notice That Your First Lens Misses?', {
+                type: 'textarea',
+                min: 35,
+                rows: 3,
+                example: '“While Conflict Theory highlights resource inequality, Symbolic Interactionism focuses on how Elena and Marcus actively negotiate shared meanings of fairness during their evening check-ins.”'
+            })}
+        </section>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900">Evidence & Source Log (3 Verified Claims or Assumptions)</h3>
+            <p class="text-xs text-slate-600">Record three specific claims used in your family project (e.g., textbook definitions, local rent/childcare figures, or labeled simulation assumptions).</p>
+            <div class="space-y-3">
+                ${state.sources.map((src, idx) => `
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                        <strong class="text-xs text-slate-800 block">Evidence Record #${idx + 1}</strong>
+                        <input type="text" value="${esc(src.claim)}" oninput="updateSource(${idx}, 'claim', this.value)" placeholder="Claim or concept (min 5 chars)..." class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs">
+                        <textarea rows="2" oninput="updateSource(${idx}, 'source', this.value)" placeholder="Source citation & how it supports your claim (min 10 chars)..." class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs">${esc(src.source)}</textarea>
+                        <input type="date" value="${esc(src.date)}" oninput="updateSource(${idx}, 'date', this.value)" class="px-2.5 py-1 bg-white border border-slate-300 rounded text-xs">
+                    </div>
+                `).join('')}
+            </div>
+        </section>
+
+        ${renderConceptCheckQuiz(5)}
+    `;
+}
+
+function renderStep6() {
+    const t = calcTotals();
+    const futNet = (Number(state.data.futureIncome) || 0) - (Number(state.data.futureDeductions) || 0);
+    const futSpend = Math.max(0, t.spend + (Number(state.data.futureCostChange) || 0));
+    const futBal = futNet - futSpend;
+
+    return `
+        <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-teal-700">Chapter 6 of 6 · Future Trajectories & Textbook Concept Synthesis</span>
+            <h2 class="text-xl font-serif font-bold text-slate-900 mt-0.5">How Will We Survive & Thrive?</h2>
+            <p class="text-xs text-slate-600 mt-1">Model a future change, compare two conditional trajectories, and apply <strong>three distinct textbook concepts</strong> so your portfolio meets the 5+ concept rubric standard.</p>
+        </div>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900">Future Monthly Budget Comparison</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                ${renderField('futureIncome', 'Future Gross / Mo ($)', { type: 'number', min: 0, max: 200000 })}
+                ${renderField('futureDeductions', 'Future Deductions ($)', { type: 'number', min: 0, max: 200000 })}
+                ${renderField('futureCostChange', 'Monthly Cost Change ($)', { type: 'number', min: -50000, max: 50000 })}
+            </div>
+            <div class="grid grid-cols-2 gap-2.5 text-center text-xs">
+                <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                    <span class="text-slate-500 block">Current Monthly Balance</span>
+                    <strong class="text-base font-mono ${t.balance < 0 ? 'text-rose-600' : 'text-teal-700'}">${money(t.balance)}</strong>
+                </div>
+                <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                    <span class="text-slate-500 block">Projected Future Balance</span>
+                    <strong id="future-bal-preview" class="text-base font-mono ${futBal < 0 ? 'text-rose-600' : 'text-teal-700'}">${money(futBal)}</strong>
+                </div>
+            </div>
+            ${renderField('futureAssumptions', 'What Must Be True for This Future Budget to Work?', {
+                type: 'textarea',
+                min: 30,
+                rows: 2,
+                hint: 'Account for new costs (e.g., commuting, tuition, or childcare shifts) required to earn higher pay.'
+            })}
+        </section>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900">Two Conditional Future Paths & 3 Concept Applications</h3>
+            ${renderField('pathA', 'Path A — If Key Supports & Assumptions Hold', {
+                type: 'textarea',
+                min: 30,
+                rows: 2
+            })}
+            ${renderField('pathB', 'Path B — Contingency Plan If a Major Condition Changes', {
+                type: 'textarea',
+                min: 30,
+                rows: 2
+            })}
+            <div class="grid grid-cols-1 gap-3 pt-2">
+                ${[1, 2, 3].map(i => `
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                        ${renderField('futureConcept' + i, `Textbook Concept #${i} (Choose 3 Different Concepts)`, { options: Object.keys(CONCEPTS) })}
+                        ${renderField('futureApply' + i, `Apply Concept #${i} to Your Family’s Future`, {
+                            type: 'textarea',
+                            min: 25,
+                            rows: 2
+                        })}
+                    </div>
+                `).join('')}
+            </div>
+            ${renderField('learning', 'Metacognitive Reflection: What Changed in Your Thinking?', {
+                type: 'textarea',
+                min: 30,
+                rows: 2
+            })}
+        </section>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900">Concrete Next Action & Academic Integrity</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                ${renderField('nextAction', 'Concrete Next Action for the Household')}
+                ${renderField('owner', 'Who Owns This Action?')}
+                ${renderField('reviewDate', 'Review Date', { type: 'date' })}
+                ${renderField('indicator', 'Evidence of Progress')}
+            </div>
+            ${renderField('backupPlan', 'Backup Plan If Action Is Blocked', { type: 'textarea', min: 30, rows: 2 })}
+            ${renderField('assistance', 'Outside Assistance & Verification Declaration', {
+                type: 'textarea',
+                min: 15,
+                rows: 2,
+                placeholder: 'State “I completed this independently” or describe any tools/resources used and how you verified them.'
+            })}
+            <label class="flex items-start gap-2.5 text-xs text-slate-700 cursor-pointer">
+                <input type="checkbox" data-key="ownWork" ${state.data.ownWork ? 'checked' : ''} class="mt-0.5 accent-teal-600 w-4 h-4">
+                <span>I have reviewed all six chapters, verified my sources, and understand that my instructor evaluates the quality of my sociological reasoning.</span>
+            </label>
+        </section>
+
+        ${renderConceptCheckQuiz(6)}
+    `;
+}
+
+function renderStep7() {
+    const ready = isAllComplete();
+    const incompleteChapters = [0, 1, 2, 3, 4, 5, 6].filter(n => validateChapter(n).length > 0);
+    const snapshotImg = capture3DSnapshot();
+
+    return `
+        <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-teal-700">Final Portfolio · 6-Section Report & Certificate</span>
+            <h2 class="text-xl font-serif font-bold text-slate-900 mt-0.5">${ready ? 'Your Portfolio & Certificate Are Unlocked!' : 'Your Portfolio (Draft Mode)'}</h2>
+            <p class="text-xs text-slate-600 mt-1">Export your 3D family snapshot, 6-section sociological report, budget CSV, or printable completion certificate.</p>
+        </div>
+
+        ${ready ? `
+            <div class="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-4 text-xs text-emerald-950 space-y-1">
+                <strong class="text-sm block">🎉 All 6 Chapters & Concept Checks Verified!</strong>
+                <p>Completed on ${esc(new Date(state.completedAt || Date.now()).toLocaleString())} · Record ID: <span class="font-mono font-bold">${esc(state.id)}</span></p>
+            </div>
+        ` : `
+            <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 text-xs text-amber-950 space-y-1.5">
+                <strong class="block">To unlock the official Completion Certificate, finish:</strong>
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                    ${incompleteChapters.map(c => `<button onclick="goToStep(${c})" class="px-2.5 py-1 bg-amber-200/80 hover:bg-amber-300 rounded font-bold text-amber-950 transition">${SHORT_STEPS[c]} →</button>`).join('')}
+                </div>
+            </div>
+        `}
+
+        <!-- 3D Family Portrait Card (Supports Rubric Creativity Criterion) -->
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-2.5">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-900">📸 Live 3D Family Portrait (Included in Report)</h3>
+                <button onclick="renderWorkspace()" class="text-xs text-teal-700 font-semibold hover:underline">Refresh Snapshot</button>
+            </div>
+            ${snapshotImg ? `<img src="${snapshotImg}" alt="3D Family Snapshot" class="w-full h-44 object-cover rounded-lg border border-slate-300">` : ''}
+            <p class="text-[11px] text-slate-500">Tip for Rubric Creativity (4+ visuals): Your exported HTML report embeds this 3D family portrait plus structured budget and time tables.</p>
+        </section>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between space-y-3">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">📄 6-Section Family Report</h3>
+                    <p class="text-xs text-slate-600 mt-1">Complete narrative, 3D portrait, budget justifications, 168-hour table, crisis analysis, and theory applications.</p>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    <button onclick="previewArtifact('report')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded text-xs font-bold">Preview</button>
+                    <button onclick="downloadArtifact('report')" class="px-3 py-1.5 bg-teal-700 hover:bg-teal-600 text-white rounded text-xs font-bold">Download HTML</button>
+                    <button onclick="printArtifact('report')" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-bold">Print / PDF</button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between space-y-3">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">🎓 Completion Certificate</h3>
+                    <p class="text-xs text-slate-600 mt-1">Dated certificate documenting your 3D family simulation, theory application, and concept checks.</p>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    <button onclick="previewArtifact('certificate')" ${ready ? '' : 'disabled'} class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-slate-800 rounded text-xs font-bold">Preview</button>
+                    <button onclick="downloadArtifact('certificate')" ${ready ? '' : 'disabled'} class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white rounded text-xs font-bold">Download HTML</button>
+                    <button onclick="printArtifact('certificate')" ${ready ? '' : 'disabled'} class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white rounded text-xs font-bold">Print / PDF</button>
+                </div>
+            </div>
+        </div>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center justify-between gap-2">
+            <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Additional Exports & Data</h3>
+                <p class="text-xs text-slate-500">Save your spreadsheet data or download a full JSON backup to resume on any computer.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="exportBudgetCSV()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold border border-slate-300">📊 Budget CSV</button>
+                <button onclick="exportBackup()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold border border-slate-300">💾 Save Backup JSON</button>
+                <button onclick="confirmResetApp()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold border border-rose-200">Start Over</button>
+            </div>
+        </section>
+    `;
+}
+
+/**
+ * ============================================================================
+ * 6. VALIDATION & NAVIGATION CONTROLLERS
+ * ============================================================================
+ */
+function hasMinChars(key, min) {
+    return String(state.data[key] ?? '').trim().length >= min;
+}
+
+function validateChapter(stepNum) {
+    const errs = [];
+    const req = (key, msg, min = 1) => { if (!hasMinChars(key, min)) errs.push(msg); };
+    const d = state.data;
+
+    if (stepNum === 0) {
+        req('learner', 'Enter your name or nickname for the portfolio (min 1 char).', 1);
+        if (!d.introRead) errs.push('Check the box acknowledging the simulation guidelines.');
+        return errs;
+    }
+
+    if (stepNum === 1) {
+        req('familyName', 'Enter a household name.', 1);
+        req('location', 'Enter a city/location.', 1);
+        req('familyForm', 'Select the adults’ relationship arrangement.', 1);
+        req('value', 'Select a guiding family value.', 1);
+        req('origin', 'Describe how the family came together (min 20 chars).', 20);
+        ['a', 'b', 'c'].forEach((p, idx) => {
+            const label = idx === 2 ? 'the Child' : `Adult ${idx + 1}`;
+            req(p + 'Name', `Enter a name for ${label}.`, 1);
+            req(p + 'Bio', `Write a biography for ${d[p + 'Name'] || label} (min 30 chars).`, 30);
+        });
+        req('network', 'Describe the external support network and its limits (min 25 chars).', 25);
+        req('familyReflect', 'Complete the socialization / life course reflection (min 30 chars).', 30);
+        if (!state.checks[1]?.passed) errs.push('Answer the Chapter 1 concept check question correctly.');
+    }
+
+    if (stepNum === 2) {
+        req('jobA', 'Enter Adult 1’s work or study role.', 2);
+        req('jobB', 'Enter Adult 2’s work or study role.', 2);
+        if (calcTotals().gross <= 0) errs.push('Combined monthly gross income must be greater than $0.');
+        if ((Number(d.deductions) || 0) > calcTotals().gross) errs.push('Deductions cannot exceed gross income.');
+        req('incomeBasis', 'Explain your income and deduction figures (min 25 chars).', 25);
+        if (state.expenses.some(e => !String(e.source || '').trim())) {
+            errs.push('Provide a source or justification for all 10 expense categories.');
+        }
+        req('budgetReflect', 'Explain the main budget tradeoff or shortfall (min 30 chars).', 30);
+        req('carePlan', 'Describe childcare coverage and backup during work hours (min 30 chars).', 30);
+        if (!state.checks[2]?.passed) errs.push('Answer the Chapter 2 concept check question correctly.');
+    }
+
+    if (stepNum === 3) {
+        ['a', 'b'].forEach((p, idx) => {
+            req(p + 'StyleExample', `Illustrate Adult ${idx + 1}’s love, communication, and parenting patterns (min 35 chars).`, 35);
+        });
+        req('lifestyle', 'Describe everyday routines and shared activities (min 25 chars).', 25);
+        req('conversationPrediction', 'Write your prediction before running the 3D dialogue rehearsal (min 25 chars).', 25);
+        if (!state.conversation) errs.push('Click “Play Selected Response in 3D Living Room” to test a conversation branch.');
+        req('repair', 'Write your revised de-escalating response (min 25 chars).', 25);
+        req('relationshipReflect', 'Explain why your revision helps and one limitation (min 30 chars).', 30);
+        ['Money', 'Care', 'Talk', 'Time'].forEach(k => req('agreement' + k, `Complete all four relationship agreement commitments (min 20 chars each).`, 20));
+        if (!state.checks[3]?.passed) errs.push('Answer the Chapter 3 concept check question correctly.');
+    }
+
+    if (stepNum === 4) {
+        req('eventPrediction', 'Predict the financial and time consequences of the disruption (min 30 chars).', 30);
+        if (!state.eventRun) errs.push('Select a response strategy and click “Simulate Disruption Outcome in 3D”.');
+        req('eventReason', 'Explain why you chose this response over alternatives (min 30 chars).', 30);
+        req('structural', 'Identify the structural constraint shaping your options (min 30 chars).', 30);
+        req('burden', 'Explain who bears the time, money, or emotional burden (min 30 chars).', 30);
+        req('resourcePlan', 'Describe an institutional change or community support that would help (min 30 chars).', 30);
+        if (!state.checks[4]?.passed) errs.push('Answer the Chapter 4 concept check question correctly.');
+    }
+
+    if (stepNum === 5) {
+        if (!THEORIES[d.theory]) errs.push('Choose a primary sociological theory.');
+        req('theoryDefinition', 'Define your chosen theory in your own words (min 25 chars).', 25);
+        req('theorySource', 'Provide the course source or textbook citation (min 5 chars).', 5);
+        req('theoryExample1', 'Complete Theory Application 1 (min 35 chars).', 35);
+        req('theoryExample2', 'Complete Theory Application 2 (min 35 chars).', 35);
+        if (!THEORIES[d.alternative] || d.alternative === d.theory) errs.push('Choose a different contrasting sociological perspective.');
+        req('theoryLimit', 'Explain what the contrasting perspective notices (min 35 chars).', 35);
+        if (state.sources.some(s => s.claim.trim().length < 5 || s.source.trim().length < 10)) {
+            errs.push('Complete all 3 evidence records with a claim (5+ chars) and source explanation (10+ chars).');
+        }
+        if (!state.checks[5]?.passed) errs.push('Answer the Chapter 5 concept check question correctly.');
+    }
+
+    if (stepNum === 6) {
+        req('futureAssumptions', 'Explain the assumptions behind your future budget (min 30 chars).', 30);
+        req('pathA', 'Describe Path A (min 30 chars).', 30);
+        req('pathB', 'Describe Path B (min 30 chars).', 30);
+        const chosenConcepts = [d.futureConcept1, d.futureConcept2, d.futureConcept3];
+        if (new Set(chosenConcepts).size < 3) errs.push('Select three different textbook concepts in Chapter 6.');
+        [1, 2, 3].forEach(i => req('futureApply' + i, `Apply Textbook Concept #${i} to a future path (min 25 chars).`, 25));
+        req('learning', 'Reflect on what changed in your thinking (min 30 chars).', 30);
+        req('nextAction', 'Specify a concrete next action (min 3 chars).', 3);
+        req('owner', 'Specify who owns the next action (min 2 chars).', 2);
+        req('indicator', 'Specify an evidence indicator of progress (min 3 chars).', 3);
+        req('backupPlan', 'Provide a backup plan (min 30 chars).', 30);
+        req('assistance', 'Complete the assistance declaration (min 15 chars).', 15);
+        if (!d.ownWork) errs.push('Check the final verification box in Chapter 6.');
+        if (!state.checks[6]?.passed) errs.push('Answer the Chapter 6 concept check question correctly.');
+    }
+
+    return [...new Set(errs)];
+}
+
+function isAllComplete() {
+    return [0, 1, 2, 3, 4, 5, 6].every(n => validateChapter(n).length === 0);
+}
+
+function renderNavStepper() {
+    const nav = document.getElementById('chapter-nav');
+    nav.innerHTML = SHORT_STEPS.map((label, idx) => {
+        const done = idx <= 6 && validateChapter(idx).length === 0;
+        const active = state.step === idx;
+        return `<button onclick="goToStep(${idx})" class="py-1.5 px-1 rounded text-center font-bold truncate transition border ${
+            active
+                ? 'bg-amber-400 text-slate-950 border-amber-300 shadow'
+                : done
+                ? 'bg-emerald-900/70 text-emerald-200 border-emerald-700/60 hover:bg-emerald-800'
+                : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+        }">
+            ${done && !active ? '✓ ' : ''}${label}
+        </button>`;
+    }).join('');
+
+    const doneCount = [1, 2, 3, 4, 5, 6].filter(n => validateChapter(n).length === 0).length;
+    const progEl = document.getElementById('footer-progress');
+    if (progEl) progEl.textContent = `${doneCount} of 6 chapters complete`;
+
+    const prevBtn = document.getElementById('btn-prev');
+    const nextBtn = document.getElementById('btn-next');
+    if (prevBtn) prevBtn.disabled = state.step === 0;
+    if (nextBtn) {
+        if (state.step === 0) nextBtn.textContent = 'Begin Chapter 1 →';
+        else if (state.step === 6) nextBtn.textContent = 'Complete & Open Portfolio →';
+        else if (state.step === 7) nextBtn.textContent = '🖨️ Print / Save PDF Report';
+        else nextBtn.textContent = `Save Chapter ${state.step} & Continue →`;
+    }
+}
+
+function renderWorkspace(scrollTop = false) {
+    renderNavStepper();
+    updateTopHUD();
+    updateRoomSceneMood();
+
+    const ws = document.getElementById('workspace');
+    const renderers = [renderStep0, renderStep1, renderStep2, renderStep3, renderStep4, renderStep5, renderStep6, renderStep7];
+    ws.innerHTML = renderers[state.step]();
+
+    const errDrawer = document.getElementById('error-drawer');
+    if (errDrawer) errDrawer.classList.add('hidden');
+
+    if (scrollTop) ws.scrollTop = 0;
+}
+
+function goToStep(n) {
+    state.step = Math.max(0, Math.min(7, n));
+    hideSpeechOverlay();
+    saveState();
+    renderWorkspace(true);
+}
+
+function changeStep(delta) {
+    goToStep(state.step + delta);
+}
+
+function handleNextStep() {
+    if (state.step === 7) {
+        printArtifact('report');
+        return;
+    }
+    const errs = validateChapter(state.step);
+    const errDrawer = document.getElementById('error-drawer');
+    if (errs.length > 0) {
+        errDrawer.innerHTML = `<div class="flex items-start justify-between gap-2">
+            <div>
+                <strong class="block text-rose-950">Please complete the following before advancing (or use the top bar to jump chapters):</strong>
+                <ul class="list-disc pl-4 mt-1 space-y-0.5">${errs.map(e => `<li>${esc(e)}</li>`).join('')}</ul>
+            </div>
+            <button onclick="document.getElementById('error-drawer').classList.add('hidden')" class="text-rose-700 font-bold">✕</button>
+        </div>`;
+        errDrawer.classList.remove('hidden');
+        return;
+    }
+    state.completed[state.step] = true;
+    if (isAllComplete() && !state.completedAt) {
+        state.completedAt = new Date().toISOString();
+    }
+    goToStep(state.step + 1);
+}
+
+/**
+ * ============================================================================
+ * 7. INTERACTIVE EVENT HANDLERS (INPUTS, 3D CUSTOMIZER, QUIZZES, SCENARIOS)
+ * ============================================================================
+ */
+document.addEventListener('input', e => {
+    const el = e.target;
+    const key = el.dataset.key;
+    if (!key) return;
+
+    const val = el.type === 'checkbox' ? el.checked : el.type === 'number' ? (el.value === '' ? 0 : Number(el.value)) : el.value;
+    state.data[key] = val;
+
+    // Live character counter update
+    if (el.tagName === 'TEXTAREA' && el.dataset.min) {
+        const min = Number(el.dataset.min) || 0;
+        const cur = el.value.trim().length;
+        const cntEl = document.getElementById('cnt-' + key);
+        if (cntEl) {
+            const met = cur >= min;
+            cntEl.textContent = `${cur} / ${min} chars min ${met ? '✓' : ''}`;
+            cntEl.className = 'char-counter ' + (met ? 'met' : 'unmet');
+        }
+    }
+
+    // If names or jobs change, refresh 3D nameplates
+    if (['aName', 'bName', 'cName', 'cAge', 'jobA', 'jobB'].includes(key)) {
+        rebuild3DFamily();
+    }
+
+    // Dynamic budget & time pill updates
+    if (['incomeA', 'incomeB', 'deductions'].includes(key)) {
+        const t = calcTotals();
+        const pill = document.getElementById('budget-summary-pill');
+        if (pill) {
+            pill.textContent = `Net ${money(t.net)} − Outflow ${money(t.spend)} = ${money(t.balance)}`;
+            pill.className = `text-xs font-mono font-bold px-2.5 py-1 rounded-full ${t.balance < 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}`;
+        }
+    }
+
+    ['A', 'B'].forEach(suf => {
+        const hrsEl = document.getElementById('hrs-left-' + suf);
+        if (hrsEl) {
+            const left = calcHoursLeft(suf);
+            hrsEl.textContent = `${left}h free`;
+            hrsEl.className = 'text-xs font-mono font-bold ' + (left < 0 ? 'text-rose-600' : 'text-teal-700');
+        }
+    });
+
+    if (['futureIncome', 'futureDeductions', 'futureCostChange'].includes(key)) {
+        const t = calcTotals();
+        const futNet = (Number(state.data.futureIncome) || 0) - (Number(state.data.futureDeductions) || 0);
+        const futSpend = Math.max(0, t.spend + (Number(state.data.futureCostChange) || 0));
+        const futBal = futNet - futSpend;
+        const fbEl = document.getElementById('future-bal-preview');
+        if (fbEl) {
+            fbEl.textContent = money(futBal);
+            fbEl.className = 'text-base font-mono ' + (futBal < 0 ? 'text-rose-600' : 'text-teal-700');
+        }
+    }
+
+    if (el.tagName === 'SELECT' && key === 'theory') {
+        renderWorkspace(false);
+    }
+
+    saveState();
+    renderNavStepper();
+});
+
+window.updateAvatarProp = function(index, prop, value) {
+    state.avatars[index][prop] = value;
+    rebuild3DFamily();
+    setCameraFocus(index);
+    saveState();
+};
+
+window.randomizeAvatars = function() {
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)][0];
+    state.avatars.forEach(av => {
+        av.skin = pick(SKIN_TONES);
+        av.hairStyle = pick(HAIR_STYLES);
+        av.hairColor = pick(HAIR_COLORS);
+        av.shirt = pick(OUTFIT_COLORS);
+        av.acc = pick(ACCESSORIES);
+    });
+    rebuild3DFamily();
+    setCameraFocus('all');
+    saveState();
+    renderWorkspace(false);
+};
+
+window.updateExpense = function(index, field, value) {
+    state.expenses[index][field] = field === 'amount' ? Math.max(0, Number(value) || 0) : value;
+    const t = calcTotals();
+    const pill = document.getElementById('budget-summary-pill');
+    if (pill) {
+        pill.textContent = `Net ${money(t.net)} − Outflow ${money(t.spend)} = ${money(t.balance)}`;
+        pill.className = `text-xs font-mono font-bold px-2.5 py-1 rounded-full ${t.balance < 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}`;
+    }
+    saveState();
+};
+
+window.updateSource = function(index, field, value) {
+    state.sources[index][field] = value;
+    saveState();
+    renderNavStepper();
+};
+
+window.selectQuizOption = function(chapterNum, optionIdx) {
+    state.checks[chapterNum] = { ...(state.checks[chapterNum] || {}), selected: optionIdx };
+    saveState();
+    renderWorkspace(false);
+};
+
+window.checkQuizAnswer = function(chapterNum) {
+    const q = QUESTIONS[chapterNum];
+    const cur = state.checks[chapterNum] || {};
+    if (cur.selected === undefined) return;
+    cur.attempts = (cur.attempts || 0) + 1;
+    cur.passed = cur.selected === q.answer;
+    cur.feedback = q.why;
+    state.checks[chapterNum] = cur;
+    if (isAllComplete() && !state.completedAt) state.completedAt = new Date().toISOString();
+    saveState();
+    renderWorkspace(false);
+};
+
+window.selectReplyBranch = function(replyId) {
+    state.data.reply = replyId;
+    saveState();
+    renderWorkspace(false);
+};
+
+window.run3DConversationRehearsal = function() {
+    if (!hasMinChars('conversationPrediction', 25) || !state.data.reply) {
+        const errDrawer = document.getElementById('error-drawer');
+        errDrawer.innerHTML = `<strong class="text-rose-900">Write your prediction (25+ chars) and select one of the three reply buttons first.</strong>`;
+        errDrawer.classList.remove('hidden');
+        return;
+    }
+    const branches = {
+        defend: {
+            response: `“I’m talking about afternoon pickup, not attacking your work ethic! Now we’re just arguing about who is more tired.”`,
+            explanation: `Defensiveness and counter-blame escalate tension and leave the practical coordination gap unresolved.`
+        },
+        pause: {
+            response: `“Okay. Let’s take 20 minutes to breathe and sit down with both shift calendars at 7:00.”`,
+            explanation: `A structured physiological break prevents escalation, provided both partners follow through at the agreed time.`
+        },
+        listen: {
+            response: `“Thank you for seeing that. It’s Tuesday and Thursday afternoons that collide with my shift—let’s divide those pickups.”`,
+            explanation: `Active listening validates the unseen mental load and moves directly into concrete role negotiation.`
+        }
+    };
+    const chosen = branches[state.data.reply];
+    state.conversation = { choice: state.data.reply, ...chosen };
+    setCameraFocus('all');
+    trigger3DGesture(
+        state.data.reply,
+        `${state.data.aName || 'Adult 1'} & ${state.data.bName || 'Adult 2'} (Live Rehearsal)`,
+        chosen.response,
+        chosen.explanation
+    );
+    saveState();
+    renderWorkspace(false);
+};
+
+window.selectDisruptionEvent = function(evKey) {
+    state.data.event = evKey;
+    state.data.eventChoice = '';
+    state.eventRun = null;
+    saveState();
+    renderWorkspace(false);
+};
+
+window.selectEventChoice = function(choiceId) {
+    state.data.eventChoice = choiceId;
+    saveState();
+    renderWorkspace(false);
+};
+
+window.executeDisruptionEvent = function() {
+    if (!hasMinChars('eventPrediction', 30) || !state.data.eventChoice) {
+        const errDrawer = document.getElementById('error-drawer');
+        errDrawer.innerHTML = `<strong class="text-rose-900">Enter your prediction (30+ chars) and choose a response option before running the simulation.</strong>`;
+        errDrawer.classList.remove('hidden');
+        return;
+    }
+    const ev = EVENTS[state.data.event] || EVENTS.care;
+    const ch = ev.choices.find(c => c.id === state.data.eventChoice);
+    if (!ch) return;
+
+    state.eventRun = {
+        event: state.data.event,
+        choice: ch.id,
+        title: ev.title,
+        option: ch.title,
+        cost: ch.cost,
+        lost: ch.lost,
+        hours: ch.hours,
+        lesson: ch.lesson,
+        prediction: state.data.eventPrediction
+    };
+    trigger3DGesture('pause', `Disruption: ${ev.title}`, `Selected Strategy: ${ch.title} (${money(-(ch.cost + ch.lost))} cash/wage effect, +${ch.hours} household hrs)`, ch.lesson);
+    saveState();
+    renderWorkspace(false);
+};
+
+/**
+ * ============================================================================
+ * 8. PORTFOLIO REPORT, CERTIFICATE, CSV & BACKUP GENERATORS
+ * ============================================================================
+ */
+function capture3DSnapshot() {
+    try {
+        if (!renderer) return '';
+        renderer.render(scene, camera);
+        return renderer.domElement.toDataURL('image/png');
+    } catch (e) {
+        return '';
+    }
+}
+
+function buildReportHTML() {
+    const d = state.data;
+    const t = calcTotals();
+    const snap = capture3DSnapshot();
+    const run = state.eventRun;
+    const futNet = (Number(d.futureIncome) || 0) - (Number(d.futureDeductions) || 0);
+    const futSpend = Math.max(0, t.spend + (Number(d.futureCostChange) || 0));
+
+    return `
+        <div style="font-family: Georgia, serif; color: #1e293b; line-height: 1.6; max-width: 860px; margin: 0 auto;">
+            <div style="border-bottom: 3px solid #0f172a; padding-bottom: 14px; margin-bottom: 20px;">
+                <p style="font-family: sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #0f766e; font-weight: bold; margin: 0;">Family Futures 3D · Sociological Case Portfolio</p>
+                <h1 style="font-size: 28px; margin: 6px 0; color: #0f172a;">${esc(d.familyName || 'Household Portfolio')}</h1>
+                <p style="font-family: sans-serif; font-size: 13px; color: #475569; margin: 0;">
+                    Prepared by <strong>${esc(d.learner || 'Student')}</strong> ${d.course ? `· ${esc(d.course)}` : ''} · Record ID: ${esc(state.id)} · Exported ${esc(new Date().toLocaleDateString())}
+                </p>
+            </div>
+
+            ${snap ? `<div style="margin: 16px 0; text-align: center;">
+                <img src="${snap}" alt="3D Family Diorama" style="max-width: 100%; height: auto; border-radius: 10px; border: 1px solid #cbd5e1;">
+                <p style="font-family: sans-serif; font-size: 11px; color: #64748b; margin-top: 4px;">Figure 1: Custom 3D Household Diorama (${esc(d.aName)}, ${esc(d.bName)}, and ${esc(d.cName)})</p>
+            </div>` : ''}
+
+            <h2 style="color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">1 · Who Are We? Identity, Structure & Social Support</h2>
+            <p><strong>Household Structure:</strong> ${esc(d.familyForm)} in ${esc(d.location)} · <strong>Guiding Value:</strong> ${esc(d.value)}</p>
+            <p>${esc(d.origin)}</p>
+            <ul>
+                <li><strong>${esc(d.aName)} (Age ${esc(d.aAge)}, ${esc(d.aIdentity)}):</strong> ${esc(d.aBio)}</li>
+                <li><strong>${esc(d.bName)} (Age ${esc(d.bAge)}, ${esc(d.bIdentity)}):</strong> ${esc(d.bBio)}</li>
+                <li><strong>${esc(d.cName)} (Age ${esc(d.cAge)}, ${esc(d.cIdentity)}):</strong> ${esc(d.cBio)}</li>
+            </ul>
+            <p><strong>Support Network & Limits:</strong> ${esc(d.network)}</p>
+            <p><strong>Life Course & Socialization Analysis:</strong> ${esc(d.familyReflect)}</p>
+
+            <h2 style="color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">2 · What Do We Do? Budget & 168-Hour Time Plan</h2>
+            <p><strong>Work Roles:</strong> ${esc(d.aName)} (${esc(d.jobA)}) — ${money(d.incomeA)}/mo gross; ${esc(d.bName)} (${esc(d.jobB)}) — ${money(d.incomeB)}/mo gross. Combined Gross: ${money(t.gross)}/mo (${money(t.gross * 12)}/yr). Deductions: ${money(d.deductions)}/mo. <strong>Net Take-Home: ${money(t.net)}/mo.</strong> Emergency Cash: ${money(d.cash)}.</p>
+            <p><strong>Income & Deduction Justification:</strong> ${esc(d.incomeBasis)}</p>
+            <table style="width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 12px; margin: 12px 0;">
+                <thead>
+                    <tr style="background: #f1f5f9;">
+                        <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left;">Category</th>
+                        <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left;">Monthly $</th>
+                        <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left;">Basis</th>
+                        <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left;">Evidence / Justification</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${state.expenses.map(e => `<tr>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${esc(e.label)}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${money(e.amount)}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${esc(e.basis)}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${esc(e.source)}</td>
+                    </tr>`).join('')}
+                    <tr style="font-weight: bold; background: #f8fafc;">
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">Total Outflow / Monthly Balance</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${money(t.spend)}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;" colspan="2">Net Balance Before Disruption: ${money(t.balance)}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Budget Tradeoff Analysis:</strong> ${esc(d.budgetReflect)}</p>
+            <p><strong>168-Hour Weekly Schedule (${esc(d.workPlan)}):</strong> ${esc(d.aName)} has ${calcHoursLeft('A')} unallocated hours/wk; ${esc(d.bName)} has ${calcHoursLeft('B')} unallocated hours/wk (after 56h sleep, paid work, study, unpaid care, commute, and personal care).</p>
+            <p><strong>Care Coverage Plan:</strong> ${esc(d.carePlan)}</p>
+
+            <h2 style="color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">3 · How Do We Live? Relationships, Parenting & Agreement</h2>
+            <p><strong>${esc(d.aName)}:</strong> ${esc(d.aLove)} · ${esc(d.aCommunication)} · ${esc(d.aParenting)} Parenting. ${esc(d.aStyleExample)}</p>
+            <p><strong>${esc(d.bName)}:</strong> ${esc(d.bLove)} · ${esc(d.bCommunication)} · ${esc(d.bParenting)} Parenting. ${esc(d.bStyleExample)}</p>
+            <p><strong>Daily Routines & Lifestyle:</strong> ${esc(d.lifestyle)}</p>
+            <p><strong>Conflict Rehearsal:</strong> Initial prediction: ${esc(d.conversationPrediction)} · Revised constructive response: “${esc(d.repair)}” · Analysis: ${esc(d.relationshipReflect)}</p>
+            <ul>
+                <li><strong>Money Agreement:</strong> ${esc(d.agreementMoney)}</li>
+                <li><strong>Care & Housework Agreement:</strong> ${esc(d.agreementCare)}</li>
+                <li><strong>Communication Agreement:</strong> ${esc(d.agreementTalk)}</li>
+                <li><strong>Shared Time Agreement:</strong> ${esc(d.agreementTime)}</li>
+            </ul>
+
+            <h2 style="color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">4 · What Issues Arise? Disruption & Structural Constraints</h2>
+            ${run ? `<p><strong>Disruption Event:</strong> ${esc(run.title)} · <strong>Strategy:</strong> ${esc(run.option)} (One-time cash/wage effect: ${money(-(run.cost + run.lost))}; extra household hours: +${run.hours}h; affected month balance: ${money(t.balance - run.cost - run.lost)}).</p>` : ''}
+            <p><strong>Initial Prediction:</strong> ${esc(d.eventPrediction)}</p>
+            <p><strong>Decision Rationale:</strong> ${esc(d.eventReason)}</p>
+            <p><strong>Structural Constraint Analysis:</strong> ${esc(d.structural)}</p>
+            <p><strong>Distribution of Burden:</strong> ${esc(d.burden)}</p>
+            <p><strong>Institutional / Community Resource Plan:</strong> ${esc(d.resourcePlan)}</p>
+
+            <h2 style="color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">5 · How Do We Compare? Sociological Theory & Evidence</h2>
+            <p><strong>Primary Theory (${esc(d.theory)}):</strong> ${esc(d.theoryDefinition)} (Source: ${esc(d.theorySource)})</p>
+            <p><strong>Application 1:</strong> ${esc(d.theoryExample1)}</p>
+            <p><strong>Application 2:</strong> ${esc(d.theoryExample2)}</p>
+            <p><strong>Contrasting Lens (${esc(d.alternative)}):</strong> ${esc(d.theoryLimit)}</p>
+            <table style="width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 12px; margin: 12px 0;">
+                <thead>
+                    <tr style="background: #f1f5f9;">
+                        <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left;">Claim / Concept</th>
+                        <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left;">Source & Verification</th>
+                        <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left;">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${state.sources.map(s => `<tr>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${esc(s.claim)}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${esc(s.source)}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${esc(s.date)}</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+
+            <h2 style="color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">6 · How Will We Survive & Thrive? Future Plan</h2>
+            <p><strong>Projected Future Budget:</strong> Gross ${money(d.futureIncome)} − Deductions ${money(d.futureDeductions)} − Outflow ${money(futSpend)} = <strong>${money(futNet - futSpend)}/mo</strong>. Assumptions: ${esc(d.futureAssumptions)}</p>
+            <p><strong>Path A:</strong> ${esc(d.pathA)}</p>
+            <p><strong>Path B (Contingency):</strong> ${esc(d.pathB)}</p>
+            <ul>
+                <li><strong>${esc(d.futureConcept1)}:</strong> ${esc(d.futureApply1)}</li>
+                <li><strong>${esc(d.futureConcept2)}:</strong> ${esc(d.futureApply2)}</li>
+                <li><strong>${esc(d.futureConcept3)}:</strong> ${esc(d.futureApply3)}</li>
+            </ul>
+            <p><strong>Reflection on Learning:</strong> ${esc(d.learning)}</p>
+            <p><strong>Concrete Next Action:</strong> ${esc(d.nextAction)} (Owner: ${esc(d.owner)} · Review: ${esc(d.reviewDate)} · Indicator: ${esc(d.indicator)}). Backup: ${esc(d.backupPlan)}</p>
+            <p><strong>Assistance & Verification Declaration:</strong> ${esc(d.assistance)}</p>
+        </div>
+    `;
+}
+
+function buildCertificateHTML() {
+    const d = state.data;
+    const snap = capture3DSnapshot();
+    return `
+        <div style="border: 6px double #b45309; padding: 36px; text-align: center; font-family: Georgia, serif; color: #0f172a; max-width: 800px; margin: 0 auto; background: #fffbeb;">
+            <p style="font-family: sans-serif; font-size: 12px; text-transform: uppercase; letter-spacing: 3px; color: #0f766e; font-weight: bold;">Family Futures 3D · Sociology Simulation</p>
+            <h1 style="font-size: 34px; margin: 10px 0;">Certificate of Completion</h1>
+            <p style="font-size: 15px; color: #475569;">This certifies that</p>
+            <h2 style="font-size: 28px; color: #0f766e; border-bottom: 2px solid #cbd5e1; display: inline-block; padding: 0 28px 6px; margin: 10px 0;">${esc(d.learner || 'Student')}</h2>
+            <p style="font-size: 14px; max-width: 580px; margin: 12px auto; line-height: 1.6; color: #334155;">
+                completed all six chapters and concept checks of the <strong>3D Family Sociology Simulation</strong> for <em>${esc(d.familyName)}</em>, including 3D family modeling, 10-category budget justification, 168-hour time allocation, conflict rehearsal, structural disruption analysis, and theoretical application (${esc(d.theory)}).
+            </p>
+            ${snap ? `<img src="${snap}" alt="3D Family" style="width: 240px; height: 135px; object-fit: cover; border-radius: 8px; border: 2px solid #b45309; margin: 10px auto; display: block;">` : ''}
+            <p style="font-family: sans-serif; font-size: 12px; color: #475569; margin-top: 16px;">
+                ${d.course ? `Course: <strong>${esc(d.course)}</strong> · ` : ''}Completed: <strong>${esc(new Date(state.completedAt || Date.now()).toLocaleString())}</strong> · Record ID: <strong>${esc(state.id)}</strong>
+            </p>
+        </div>
+    `;
+}
+
+window.previewArtifact = function(type) {
+    const html = type === 'certificate' ? buildCertificateHTML() : buildReportHTML();
+    openModal(type === 'certificate' ? 'Completion Certificate Preview' : '6-Section Family Portfolio Report', html);
+};
+
+window.downloadArtifact = function(type) {
+    const inner = type === 'certificate' ? buildCertificateHTML() : buildReportHTML();
+    const doc = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Family Futures 3D ${type}</title></head><body style="padding:24px;">${inner}</body></html>`;
+    const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Family_Futures_3D_${type}.html`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+};
+
+window.printArtifact = function(type) {
+    const printArea = document.getElementById('print-area');
+    printArea.innerHTML = type === 'certificate' ? buildCertificateHTML() : buildReportHTML();
+    window.print();
+};
+
+window.exportBudgetCSV = function() {
+    const t = calcTotals();
+    const rows = [
+        ['Category', 'Monthly USD', 'Basis', 'Source / Justification'],
+        ['Adult 1 Gross', state.data.incomeA, 'Income', state.data.jobA],
+        ['Adult 2 Gross', state.data.incomeB, 'Income', state.data.jobB],
+        ['Deductions', state.data.deductions, 'Payroll/Taxes', state.data.incomeBasis],
+        ['Net Take-Home', t.net, 'Calculated', 'Gross minus deductions'],
+        ...state.expenses.map(e => [e.label, e.amount, e.basis, e.source]),
+        ['Total Outflow', t.spend, 'Calculated', 'Sum of 10 categories'],
+        ['Monthly Balance', t.balance, 'Calculated', 'Net minus outflow']
+    ];
+    const csv = rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Family_Futures_3D_Budget.csv';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+};
+
+window.exportBackup = function() {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Family_Futures_3D_Backup_${state.id}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+};
+
+document.getElementById('import-file').addEventListener('change', async ev => {
+    const file = ev.target.files[0];
+    if (!file) return;
+    try {
+        const parsed = JSON.parse(await file.text());
+        if (parsed && parsed.data && Array.isArray(parsed.avatars)) {
+            state = parsed;
+            saveState();
+            rebuild3DFamily();
+            renderWorkspace(true);
+        }
+    } catch (err) {
+        openModal('Restore Error', '<p class="text-rose-700">Could not read backup JSON file. Please ensure it is a valid Family Futures 3D backup.</p>');
+    } finally {
+        ev.target.value = '';
+    }
+});
+
+/**
+ * ============================================================================
+ * 9. MODALS (TILT & RUBRIC GUIDE, RESET CONFIRMATION)
+ * ============================================================================
+ */
+function openModal(title, bodyHTML) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = bodyHTML;
+    document.getElementById('modal-backdrop').classList.remove('hidden');
+}
+
+window.closeModal = function() {
+    document.getElementById('modal-backdrop').classList.add('hidden');
+};
+
+window.openGuideModal = function() {
+    openModal('Transparent Assignment Guide & 200-Point Rubric', `
+        <div class="space-y-4 text-xs text-slate-700">
+            <div class="bg-slate-100 p-3.5 rounded-xl border border-slate-200">
+                <h3 class="font-bold text-slate-900 text-sm mb-1">Purpose & Learning Objectives</h3>
+                <p>This simulation helps you connect micro-level family interactions (communication, caregiving, budgeting) with macro-level structural conditions (workplace schedules, childcare availability, unequal resources). By building a fictional family in 3D and testing how they weather a disruption, you practice applying sociological concepts and theories with evidence.</p>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-900 text-sm mb-2">Final Family Project Rubric (200 Points Total)</h3>
+                <table class="w-full border-collapse border border-slate-300 text-xs">
+                    <thead>
+                        <tr class="bg-slate-900 text-white">
+                            <th class="p-2 border border-slate-700 text-left">Criteria</th>
+                            <th class="p-2 border border-slate-700 text-left">Excellent</th>
+                            <th class="p-2 border border-slate-700 text-left">Good / Developing</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="p-2 border font-bold">Content</td>
+                            <td class="p-2 border">Contains all 6 sections. Sociological theory clearly identified, defined, and applied properly. Uses at least <strong>5 textbook concepts</strong> accurately across sections. Explains all 10 expenses with evidence.</td>
+                            <td class="p-2 border">Missing 1–2 sections, theory only named rather than applied, fewer than 5 textbook concepts, or missing justifications for expenses.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-2 border font-bold">Organization</td>
+                            <td class="p-2 border">Very well organized into 6 clear sections with headers, tables, and clear writing.</td>
+                            <td class="p-2 border">Sections uneven or missing clear transitions.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-2 border font-bold">Creativity</td>
+                            <td class="p-2 border">Customizes the 3D family diorama and incorporates 4+ visual elements (3D portrait, budget tables, time schedules, or added graphics).</td>
+                            <td class="p-2 border">Fewer visual elements or default uncustomized appearance.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-2 border font-bold">Originality</td>
+                            <td class="p-2 border">Chooses family members, backgrounds, and work/care arrangements outside traditional stereotypes.</td>
+                            <td class="p-2 border">Relies primarily on conventional tropes without exploring diverse arrangements.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `);
+};
+
+window.confirmResetApp = function() {
+    openModal('Start Over with a New Family?', `
+        <p class="text-xs text-slate-700">This will clear your current saved progress in this browser and reset the 3D family to default. You can download a JSON backup first if you want to keep your current work.</p>
+        <div class="flex justify-end gap-2 pt-3">
+            <button onclick="exportBackup()" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 rounded font-bold text-xs">Save Backup First</button>
+            <button onclick="executeResetApp()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold text-xs">Reset Everything</button>
+        </div>
+    `);
+};
+
+window.executeResetApp = function() {
+    localStorage.removeItem(STORAGE_KEY);
+    state = createDefaultState();
+    closeModal();
+    rebuild3DFamily();
+    renderWorkspace(true);
+};
+
+window.onload = function() {
+    init3DScene();
+    renderWorkspace(true);
+};
+</script>
+</body>
+</html>
